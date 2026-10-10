@@ -2,628 +2,1306 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>西高地日常手记</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Jasper 的日常手记</title>
   <style>
-    body { -webkit-tap-highlight-color: transparent; user-select: none; }
-    input, textarea, select { user-select: auto; }
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #d97706;
+      --primary-light: #fef3c7;
+      --border: #e2e8f0;
+      --danger: #ef4444;
+      --safe-bottom: env(safe-area-inset-bottom, 16px);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.5;
+      font-size: 14px;
+      padding-bottom: calc(80px + var(--safe-bottom));
+    }
+    input, textarea, select, button { font-family: inherit; font-size: inherit; }
+    button { cursor: pointer; border: none; background: none; }
+    
+    .container { max-width: 480px; margin: 0 auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 14px; }
+    .card { background: var(--card-bg); border-radius: 20px; padding: 16px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .card-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+
+    /* 顶部档案 */
+    .profile-card { display: flex; align-items: center; gap: 14px; }
+    .avatar-box { width: 66px; height: 66px; border-radius: 50%; background: var(--primary-light); border: 2px solid #fde68a; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; font-size: 28px; cursor: pointer; }
+    .avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-info { flex: 1; min-width: 0; }
+    .dog-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .dog-name { font-size: 18px; font-weight: 800; }
+    .badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; }
+    .badge-blue { background: #e0f2fe; color: #0369a1; }
+    .badge-amber { background: var(--primary-light); color: #b45309; }
+    .badge-gray { background: #f1f5f9; color: #475569; }
+    .age-text { font-size: 12px; color: var(--text-muted); margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+    /* 快捷打卡 */
+    .check-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; text-align: center; }
+    .check-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 4px; border-radius: 14px; background: #f8fafc; border: 1px solid var(--border); min-height: 56px; transition: all 0.15s; }
+    .check-btn.active { background: var(--primary-light); border-color: #fcd34d; font-weight: 700; color: #78350f; }
+    .check-btn .icon { font-size: 20px; margin-bottom: 2px; }
+    .check-btn .label { font-size: 11px; }
+
+    /* 按钮与交互控件 (严格保证 >= 44px 触控高度) */
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 16px; border-radius: 12px; font-weight: 600; font-size: 14px; min-height: 44px; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; min-height: 44px; border-radius: 10px; }
+    .btn-primary { background: var(--primary); color: #ffffff; }
+    .btn-dark { background: var(--text-main); color: #ffffff; }
+    .btn-outline { background: #ffffff; border: 1px solid var(--border); color: var(--text-main); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .input-control { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: #f8fafc; outline: none; margin-bottom: 8px; }
+    .input-control:focus { border-color: var(--primary); background: #ffffff; }
+
+    .list-item { border: 1px solid var(--border); padding: 12px; border-radius: 14px; background: #fcfcfd; margin-bottom: 8px; }
+    .progress-bar-bg { width: 100%; height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin-top: 6px; }
+    .progress-bar-fill { height: 100%; border-radius: 999px; transition: width 0.3s; }
+
+    /* 底部导航栏 */
+    .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 12px calc(8px + var(--safe-bottom)); z-index: 50; max-width: 480px; margin: 0 auto; }
+    .tab-item { display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--text-muted); font-size: 11px; font-weight: 500; min-width: 54px; min-height: 48px; justify-content: center; }
+    .tab-item.active { color: var(--primary); font-weight: 700; }
+    .tab-item .tab-icon { font-size: 20px; }
+
+    /* 模态框 */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .modal-content { background: #ffffff; width: 100%; max-width: 440px; border-radius: 20px; max-height: 85vh; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+    .compare-img-box { width: 100%; max-height: 280px; object-fit: contain; background: #000; border-radius: 12px; }
+
+    .hidden { display: none !important; }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 antialiased pb-24">
+<body>
 
-  <!-- 顶部常驻档案卡 -->
-  <header class="bg-white px-5 pt-6 pb-4 shadow-sm rounded-b-3xl">
-    <div class="flex items-center gap-3">
-      <div class="relative w-14 h-14 rounded-full bg-amber-50 border-2 border-amber-200 flex items-center justify-center overflow-hidden flex-shrink-0" onclick="document.getElementById('avatar-input').click()">
-        <img id="avatar-img" src="" class="w-full h-full object-cover hidden" alt="头像">
-        <span id="avatar-placeholder" class="text-xl">🐶</span>
-        <input type="file" id="avatar-input" accept="image/*" class="hidden">
-      </div>
-      <div class="flex-1">
-        <div class="flex items-center gap-2">
-          <h1 id="dog-name" class="text-lg font-bold text-slate-900" onclick="changeName()">小白</h1>
-          <span class="text-[11px] bg-blue-100 text-blue-700 font-semibold px-2 py-0.5 rounded-full">♂ 男孩</span>
-          <span class="text-[11px] bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full">软毛西高地</span>
+  <div class="container">
+    <!-- 顶部 Jasper 档案面板 -->
+    <header class="card">
+      <div class="profile-card">
+        <div class="avatar-box" id="avatar-container" onclick="document.getElementById('avatar-file').click()">
+          <img id="avatar-img" class="avatar-img hidden" alt="头像">
+          <span id="avatar-emoji">🐶</span>
+          <input type="file" id="avatar-file" accept="image/*" class="hidden">
         </div>
-        <p class="text-[11px] text-slate-400 mt-0.5" id="age-desc">计算年龄中...</p>
-      </div>
-      <div class="flex flex-col items-end gap-1">
-        <span class="text-[11px] bg-amber-50 text-amber-800 font-semibold px-2 py-1 rounded-lg border border-amber-200" id="bday-countdown">4·18 倒计时</span>
-        <span class="text-[11px] text-slate-400" id="dog-weight" onclick="updateWeight()">7.5 kg ✏️</span>
-      </div>
-    </div>
-  </header>
-
-  <!-- ================= 页面 1：日常打卡与手记 ================= -->
-  <main id="tab-daily" class="px-4 mt-4 space-y-4 max-w-md mx-auto">
-    <!-- 今日护理打卡 -->
-    <section class="bg-white p-4 rounded-2xl shadow-sm">
-      <div class="flex justify-between items-center mb-3">
-        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-          <span>✨</span> 今日护理打卡
-        </h2>
-        <span class="text-[11px] text-slate-400" id="today-date"></span>
-      </div>
-      <div class="grid grid-cols-5 gap-2 text-center" id="daily-checks"></div>
-    </section>
-
-    <!-- 周期护理预警 -->
-    <section class="bg-white p-4 rounded-2xl shadow-sm">
-      <h2 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-1.5">
-        <span>⏳</span> 周期护理与驱虫进度
-      </h2>
-      <div class="space-y-3" id="cycle-items"></div>
-    </section>
-
-    <!-- 成长手记瀑布流 -->
-    <section class="bg-white p-4 rounded-2xl shadow-sm">
-      <div class="flex justify-between items-center mb-3">
-        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-          <span>📷</span> 西高地日常手记
-        </h2>
-        <button onclick="togglePostForm()" class="text-xs bg-slate-900 text-white px-3 py-1.5 rounded-full font-medium active:scale-95 transition">+ 记一笔</button>
-      </div>
-
-      <div id="post-form" class="hidden border-b border-slate-100 pb-4 mb-4">
-        <textarea id="log-text" rows="2" placeholder="今天小狗表现如何？" class="w-full text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-slate-400 resize-none"></textarea>
-        <div class="flex items-center justify-between mt-2.5">
-          <label class="text-xs text-slate-500 bg-slate-100 px-3 py-2 rounded-xl cursor-pointer flex items-center gap-1.5 active:bg-slate-200">
-            <span>🖼️ 添加照片</span>
-            <input type="file" id="log-photo" accept="image/*" class="hidden" onchange="previewUpload(this)">
-          </label>
-          <span id="photo-filename" class="text-xs text-slate-400 truncate max-w-[140px]">未选照片</span>
-          <button onclick="saveLog()" class="bg-amber-500 text-white text-xs font-bold px-4 py-2 rounded-xl active:scale-95 transition">发布</button>
+        <div class="profile-info">
+          <div class="dog-name-row">
+            <span class="dog-name" id="disp-name">Jasper</span>
+            <span class="badge badge-blue">♂ 男孩</span>
+            <span class="badge badge-amber">软毛西高地</span>
+          </div>
+          <div class="age-text" id="disp-age" onclick="openProfileModal()">正在加载档案... ✏️</div>
         </div>
       </div>
-      <div id="logs-timeline" class="space-y-3"></div>
-    </section>
-  </main>
-
-  <!-- ================= 页面 2：皮肤观察与对比 ================= -->
-  <main id="tab-skin" class="hidden px-4 mt-4 space-y-4 max-w-md mx-auto">
-    <!-- 皮肤对比查看器 (就医利器) -->
-    <section class="bg-amber-50/70 border border-amber-200 p-4 rounded-2xl shadow-sm">
-      <div class="flex justify-between items-center mb-2">
-        <h2 class="text-sm font-bold text-amber-900 flex items-center gap-1.5">
-          <span>🔍</span> 皮肤红斑/湿疹前后对比
-        </h2>
-        <span class="text-[10px] text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">就医展示用</span>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px;">
+        <div style="background: #fffbeb; padding: 10px; border-radius: 14px; text-align: center;">
+          <div style="font-size: 11px; color: #92400e; font-weight: 600;" id="disp-bday-title">🎂 生日倒计时</div>
+          <div style="font-size: 15px; font-weight: 800; color: #78350f; margin-top: 2px;" id="disp-bday-countdown">-- 天</div>
+        </div>
+        <div style="background: #f0fdf4; padding: 10px; border-radius: 14px; text-align: center; cursor: pointer;" onclick="openWeightModal()">
+          <div style="font-size: 11px; color: #166534; font-weight: 600;">⚖️ 最新体重 (点击记录)</div>
+          <div style="font-size: 15px; font-weight: 800; color: #14532d; margin-top: 2px;" id="disp-weight">-- kg</div>
+        </div>
       </div>
-      <p class="text-xs text-amber-800/80 mb-3">勾选下方任意 2 条记录，点击对比查看红斑吸收或消退效果。</p>
-      <button onclick="launchCompare()" class="w-full bg-amber-600 text-white text-xs font-bold py-2 rounded-xl shadow-sm active:scale-95 transition">开始双图并列对比</button>
+    </header>
+
+    <!-- ================= TAB 1: 今日 ================= -->
+    <section id="view-today" class="view-panel">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><span>✨</span> 今日护理打卡</span>
+          <span style="font-size: 12px; color: var(--text-muted);" id="disp-today-date"></span>
+        </div>
+        <div class="check-grid" id="daily-check-container"></div>
+      </div>
+
+      <!-- 换牙期专项观察 (4~8月龄智能呈现) -->
+      <div class="card" id="teeth-card" style="border: 1px solid #fed7aa; background: #fffaf5;">
+        <div class="card-header">
+          <span class="card-title" style="color: #9a3412;"><span>🦷</span> 换牙与双排牙排查</span>
+          <span class="badge badge-amber" id="teeth-stage-badge">换牙观察期</span>
+        </div>
+        <p style="font-size: 12px; color: #7c2d12; margin-bottom: 8px;">
+          西高地犬齿滞留较普遍。若恒牙尖已冒出但乳牙仍未松动，请拍照记录并在就医时由兽医排查，切勿盲目暴力摇晃。
+        </p>
+        <button class="btn btn-sm btn-outline" style="border-color: #fdba74; color: #9a3412; width: 100%;" onclick="openTeethModal()">+ 记录一次牙齿/口腔状态</button>
+        <div id="teeth-logs" style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><span>⏳</span> 周期日程安排</span>
+          <span style="font-size: 11px; color: var(--text-muted);">遵真实执行日期</span>
+        </div>
+        <div id="cycle-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+      </div>
     </section>
 
-    <!-- 记录新皮肤情况 -->
-    <section class="bg-white p-4 rounded-2xl shadow-sm">
-      <h2 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-1.5">
-        <span>📸</span> 记录新皮肤状态
-      </h2>
-      <div class="space-y-3">
-        <div>
-          <label class="text-xs text-slate-500 block mb-1">发红部位（西高地高发）</label>
-          <select id="skin-location" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-            <option value="爪缝 / 趾间 (啃爪发红)">🐾 爪缝 / 趾间 (啃爪发红)</option>
-            <option value="肚皮 / 腹股沟 (红点/湿疹)">🟡 肚皮 / 腹股沟 (红斑/丘疹)</option>
-            <option value="下巴 / 嘴角 (红胡子/发炎)">🧼 下巴 / 嘴角 (红胡子/下巴发红)</option>
-            <option value="耳廓 / 耳道内部 (发红/皮屑)">👂 耳廓 / 耳道内部 (发红/皮屑)</option>
-            <option value="腋下 / 大腿内侧 (摩擦潮红)">🦵 腋下 / 大腿根 (软毛打结发红)</option>
+    <!-- ================= TAB 2: 皮肤追踪 ================= -->
+    <section id="view-skin" class="view-panel hidden">
+      <div class="card" style="background: #fffbeb; border-color: #fde68a;">
+        <div class="card-header">
+          <span class="card-title" style="color: #92400e;"><span>🔍</span> 状态前后对比 (就医辅助)</span>
+        </div>
+        <p style="font-size: 12px; color: #78350f; margin-bottom: 10px;">
+          勾选列表中针对同一部位的任意 2 条带照片记录，全屏查看病灶变化（原图不裁剪）。
+        </p>
+        <button class="btn btn-primary" style="width: 100%;" onclick="launchCompare()">查看两张状态变化</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title"><span>📸</span> 记录新皮肤/耳部情况</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <select id="skin-loc" class="input-control">
+            <option value="左前爪 趾间/爪垫">🐾 左前爪 趾间/爪垫</option>
+            <option value="右前爪 趾间/爪垫">🐾 右前爪 趾间/爪垫</option>
+            <option value="后爪 趾间/爪垫">🐾 后爪 趾间/爪垫</option>
+            <option value="肚皮/下腹部">🟡 肚皮/下腹部 (红点/丘疹)</option>
+            <option value="左耳道/耳廓">👂 左耳道/耳廓</option>
+            <option value="右耳道/耳廓">👂 右耳道/耳廓</option>
+            <option value="下巴/唇周">🧼 下巴/唇周 (毛发氧化或发红)</option>
             <option value="其他部位">🏷️ 其他身体部位</option>
           </select>
+
+          <select id="skin-itch" class="input-control">
+            <option value="无明显抓舔">表现程度：无明显抓舔</option>
+            <option value="偶尔抓挠/啃咬">表现程度：偶尔抓挠或啃舔</option>
+            <option value="频繁抓挠/啃咬">表现程度：频繁啃抓</option>
+            <option value="严重影响休息">表现程度：严重，影响睡眠与行动</option>
+          </select>
+
+          <textarea id="skin-desc" class="input-control" rows="2" placeholder="客观描述（如：有无皮屑、破损、异味、之前是否刚洗澡或去草地）..."></textarea>
+
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label class="btn btn-sm btn-outline">
+              <span>📷 选图/拍照</span>
+              <input type="file" id="skin-file" accept="image/*" class="hidden" onchange="handlePhotoSelect(this, 'skin')">
+            </label>
+            <span id="skin-file-tip" style="font-size: 12px; color: var(--text-muted);">可选传图</span>
+            <button class="btn btn-primary btn-sm" id="btn-save-skin" onclick="saveSkinRecord()">保存记录</button>
+          </div>
+          <div id="skin-preview-box" class="hidden" style="margin-top: 8px;">
+            <img id="skin-preview-img" style="max-height: 140px; border-radius: 10px; object-fit: contain; background: #000;">
+          </div>
         </div>
-        <textarea id="skin-note" rows="2" placeholder="记录红斑大小、是否有皮屑、是否频繁抓挠或舔舐..." class="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none resize-none"></textarea>
-        <div class="flex items-center justify-between">
-          <label class="text-xs text-slate-600 bg-slate-100 px-3 py-2 rounded-xl cursor-pointer flex items-center gap-1 active:bg-slate-200">
-            <span>📷 拍摄红斑清晰照片</span>
-            <input type="file" id="skin-photo-input" accept="image/*" class="hidden" onchange="previewSkinPhoto(this)">
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">历史追踪记录</span></div>
+        <div id="skin-records-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 3: 日常手记 ================= -->
+    <section id="view-logs" class="view-panel hidden">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><span>📖</span> Jasper 随手记</span>
+          <button class="btn btn-dark btn-sm" onclick="toggleElement('log-form')">+ 写一笔</button>
+        </div>
+        <div id="log-form" class="hidden" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);">
+          <textarea id="diary-text" class="input-control" rows="3" placeholder="记录今天的小情绪、新表现或日常趣事..."></textarea>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label class="btn btn-sm btn-outline">
+              <span>🖼️ 选照片</span>
+              <input type="file" id="diary-file" accept="image/*" class="hidden" onchange="handlePhotoSelect(this, 'diary')">
+            </label>
+            <span id="diary-file-tip" style="font-size: 12px; color: var(--text-muted);">可选</span>
+            <button class="btn btn-primary btn-sm" id="btn-save-diary" onclick="saveDiary()">发布</button>
+          </div>
+          <div id="diary-preview-box" class="hidden" style="margin-top: 8px;">
+            <img id="diary-preview-img" style="max-height: 140px; border-radius: 10px; object-fit: contain; background: #000;">
+          </div>
+        </div>
+        <div id="diary-list" style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;"></div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 4: 常备药箱 ================= -->
+    <section id="view-meds" class="view-panel hidden">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><span>💊</span> 家庭真实药箱</span>
+          <button class="btn btn-dark btn-sm" onclick="toggleElement('med-form')">+ 录入药品</button>
+        </div>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+          仅记录家中实际备有的产品与效期，不设虚拟示例库存。
+        </p>
+        <div id="med-form" class="hidden" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; padding: 12px; background: #f8fafc; border-radius: 14px;">
+          <input type="text" id="med-name" placeholder="药品名称 (如：维克耳漂、外用喷剂)" class="input-control">
+          <input type="text" id="med-usage" placeholder="医嘱用途/频次 (如：遵医嘱清洁耳道)" class="input-control">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 12px; color: var(--text-muted); white-space: nowrap;">到期日:</span>
+            <input type="date" id="med-exp" class="input-control" style="margin-bottom: 0;">
+          </div>
+          <button class="btn btn-primary btn-sm" style="margin-top: 4px;" onclick="saveMedRecord()">确认存入药箱</button>
+        </div>
+        <div id="meds-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 5: 设置与备份 ================= -->
+    <section id="view-settings" class="view-panel hidden">
+      <div class="card">
+        <div class="card-header"><span class="card-title"><span>🛡️</span> 数据安全与全量备份</span></div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+          数据全量保存在本机浏览器沙箱中。建议每月导出一次 JSON 备份文件保存到微信收藏或云盘。
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button class="btn btn-primary" onclick="exportFullBackup()">📥 导出完整备份数据 (JSON 文件)</button>
+          
+          <label class="btn btn-outline" style="position: relative;">
+            <span>📤 从备份文件恢复数据 (强校验模式)</span>
+            <input type="file" id="import-file" accept=".json" class="hidden" onchange="importFullBackup(this)">
           </label>
-          <span id="skin-photo-tip" class="text-xs text-slate-400">未拍摄</span>
-          <button onclick="saveSkinRecord()" class="bg-rose-500 text-white text-xs font-bold px-4 py-2 rounded-xl active:scale-95">保存记录</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 14px;">
+        <div class="card-header"><span class="card-title">底层存储状态</span></div>
+        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.6;" id="storage-status-desc">
+          正在核验底层数据库结构...
         </div>
       </div>
     </section>
+  </div>
 
-    <!-- 皮肤历史列表 -->
-    <section class="bg-white p-4 rounded-2xl shadow-sm">
-      <h2 class="text-sm font-bold text-slate-900 mb-3">历史追踪记录</h2>
-      <div id="skin-records-list" class="space-y-3"></div>
-    </section>
-  </main>
+  <!-- 底部固定导航栏 -->
+  <nav class="tab-bar">
+    <button class="tab-item active" onclick="switchNav('today', this)"><span class="tab-icon">✨</span>今日</button>
+    <button class="tab-item" onclick="switchNav('skin', this)"><span class="tab-icon">🔬</span>皮肤</button>
+    <button class="tab-item" onclick="switchNav('logs', this)"><span class="tab-icon">📖</span>手记</button>
+    <button class="tab-item" onclick="switchNav('meds', this)"><span class="tab-icon">💊</span>药箱</button>
+    <button class="tab-item" onclick="switchNav('settings', this)"><span class="tab-icon">⚙️</span>设置</button>
+  </nav>
 
-  <!-- ================= 页面 3：常备小药箱 ================= -->
-  <main id="tab-meds" class="hidden px-4 mt-4 space-y-4 max-w-md mx-auto">
-    <section class="bg-white p-4 rounded-2xl shadow-sm">
-      <div class="flex justify-between items-center mb-3">
-        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-          <span>💊</span> 西高地常备药品库
-        </h2>
-        <button onclick="toggleMedForm()" class="text-xs bg-slate-900 text-white px-3 py-1.5 rounded-full font-medium active:scale-95">+ 录入药品</button>
+  <!-- 弹窗：状态对比 -->
+  <div id="modal-compare" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+        <strong style="font-size: 15px;">🔍 皮肤状态前后对比 (原图完整展示)</strong>
+        <button onclick="closeModal('modal-compare')" style="font-size: 20px; font-weight: bold; color: var(--text-muted); padding: 4px 8px;">✕</button>
       </div>
-
-      <!-- 添加药品抽屉 -->
-      <div id="med-form" class="hidden border-b border-slate-100 pb-3 mb-3 space-y-2">
-        <input id="med-name" type="text" placeholder="药品名称 (如: 维克耳漂 / 爱波克 / 派奥洁)" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-        <input id="med-usage" type="text" placeholder="适应症与用法 (如: 耳道发炎时滴2滴，每周2次)" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-        <div class="flex items-center gap-2">
-          <label class="text-xs text-slate-500 flex-shrink-0">到期时间:</label>
-          <input id="med-expiry" type="date" class="w-full text-xs p-2 bg-slate-50 border border-slate-200 rounded-xl">
-        </div>
-        <button onclick="saveMed()" class="w-full bg-emerald-600 text-white text-xs font-bold py-2 rounded-xl active:scale-95 mt-1">确认存入药箱</button>
-      </div>
-
-      <div id="meds-list" class="space-y-2.5"></div>
-    </section>
-  </main>
-
-  <!-- 对比弹窗模态框 (Before vs After) -->
-  <div id="compare-modal" class="hidden fixed inset-0 bg-black/80 z-50 p-4 flex flex-col justify-center items-center">
-    <div class="bg-white w-full max-w-md rounded-3xl p-4 overflow-hidden max-h-[90vh] flex flex-col">
-      <div class="flex justify-between items-center pb-3 border-b border-slate-100">
-        <h3 class="text-sm font-bold text-slate-900">🔍 皮肤红斑前后对比</h3>
-        <button onclick="closeCompareModal()" class="text-slate-400 text-sm font-bold">✕ 关闭</button>
-      </div>
-      <div id="compare-body" class="grid grid-cols-2 gap-2 mt-3 overflow-y-auto"></div>
+      <div id="compare-modal-body" style="display: flex; flex-direction: column; gap: 14px; margin-top: 8px;"></div>
     </div>
   </div>
 
-  <!-- 底部原生 Tab 切换栏 -->
-  <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-slate-200 px-6 py-2 flex justify-around items-center z-40">
-    <button onclick="switchTab('daily')" id="btn-tab-daily" class="flex flex-col items-center gap-0.5 text-amber-600 font-bold transition">
-      <span class="text-lg">🐾</span>
-      <span class="text-[10px]">日常打卡</span>
-    </button>
-    <button onclick="switchTab('skin')" id="btn-tab-skin" class="flex flex-col items-center gap-0.5 text-slate-400 font-medium transition">
-      <span class="text-lg">🔬</span>
-      <span class="text-[10px]">皮肤追踪</span>
-    </button>
-    <button onclick="switchTab('meds')" id="btn-tab-meds" class="flex flex-col items-center gap-0.5 text-slate-400 font-medium transition">
-      <span class="text-lg">💊</span>
-      <span class="text-[10px]">常备药箱</span>
-    </button>
-  </nav>
+  <!-- 弹窗：编辑档案 -->
+  <div id="modal-profile" class="modal-overlay hidden">
+    <div class="modal-content">
+      <strong>修改 Jasper 档案</strong>
+      <label style="font-size: 12px; color: var(--text-muted);">名字：</label>
+      <input type="text" id="edit-name" class="input-control">
+      <label style="font-size: 12px; color: var(--text-muted);">出生日期：</label>
+      <input type="date" id="edit-birth" class="input-control">
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+        <button class="btn btn-sm btn-outline" onclick="closeModal('modal-profile')">取消</button>
+        <button class="btn btn-sm btn-primary" onclick="saveProfileModal()">保存</button>
+      </div>
+    </div>
+  </div>
 
-  <!-- 完整 JavaScript 逻辑 -->
+  <!-- 弹窗：记录体重 -->
+  <div id="modal-weight" class="modal-overlay hidden">
+    <div class="modal-content">
+      <strong>记录一次实际称重</strong>
+      <label style="font-size: 12px; color: var(--text-muted);">体重数值 (kg)：</label>
+      <input type="number" step="0.05" id="weight-input" placeholder="例如 7.55" class="input-control">
+      <label style="font-size: 12px; color: var(--text-muted);">称重日期：</label>
+      <input type="date" id="weight-date" class="input-control">
+      <label style="font-size: 12px; color: var(--text-muted);">备注说明（如：晨起空腹）：</label>
+      <input type="text" id="weight-note" class="input-control">
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+        <button class="btn btn-sm btn-outline" onclick="closeModal('modal-weight')">取消</button>
+        <button class="btn btn-sm btn-primary" onclick="saveWeightRecord()">保存</button>
+      </div>
+      <div style="margin-top: 12px;">
+        <strong style="font-size: 13px;">历史称重记录</strong>
+        <div id="weight-history-list" style="max-height: 140px; overflow-y: auto; margin-top: 6px; display: flex; flex-direction: column; gap: 4px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗：记录牙齿 -->
+  <div id="modal-teeth" class="modal-overlay hidden">
+    <div class="modal-content">
+      <strong>记录换牙 / 口腔观察</strong>
+      <select id="teeth-type" class="input-control">
+        <option value="乳牙自然脱落">🦷 乳牙自然脱落</option>
+        <option value="恒牙尖萌出">✨ 发现新恒牙萌出</option>
+        <option value="双排牙倾向(恒牙出乳牙在)">⚠️ 双排牙观察（需兽医核查）</option>
+        <option value="牙龈泛红/轻微肿胀">🩸 牙龈泛红/肿胀 (待观察)</option>
+      </select>
+      <textarea id="teeth-note" class="input-control" rows="2" placeholder="详细说明（如：左上犬齿脱落，或对应恒牙已萌出 2mm）..."></textarea>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+        <button class="btn btn-sm btn-outline" onclick="closeModal('modal-teeth')">取消</button>
+        <button class="btn btn-sm btn-primary" onclick="saveTeethRecord()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗：周期更新 -->
+  <div id="modal-cycle-edit" class="modal-overlay hidden">
+    <div class="modal-content">
+      <strong id="cycle-edit-title">更新周期计划</strong>
+      <label style="font-size: 12px; color: var(--text-muted);">本次实际完成日期：</label>
+      <input type="date" id="cycle-date-input" class="input-control">
+      <label style="font-size: 12px; color: var(--text-muted);">计划循环间隔 (天)：</label>
+      <input type="number" id="cycle-interval-input" min="1" class="input-control">
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+        <button class="btn btn-sm btn-outline" onclick="closeModal('modal-cycle-edit')">取消</button>
+        <button class="btn btn-sm btn-primary" onclick="confirmSaveCycle()">更新</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    let db;
-    const DB_NAME = "WestieLifeDB_v2";
-    const DB_VERSION = 2;
+    const DB_NAME = "Jasper_Life_DB";
+    const DB_VERSION = 4;
+    let db = null;
 
-    const DEFAULT_CYCLES = [
-      { id: "ears", name: "洗耳 / 拔耳毛", interval: 10, lastDate: new Date().toISOString() },
-      { id: "bath", name: "低敏药浴 / 洗护", interval: 14, lastDate: new Date().toISOString() },
-      { id: "grooming", name: "美容 / 剪脚底毛", interval: 35, lastDate: new Date().toISOString() },
-      { id: "deworm_out", name: "体外驱虫 (草地防蜱)", interval: 30, lastDate: new Date().toISOString() },
-      { id: "deworm_in", name: "体内驱虫", interval: 90, lastDate: new Date().toISOString() }
-    ];
-
+    // 纠偏后的每日打卡
     const DAILY_TASKS = [
-      { id: "beard", label: "擦胡子", icon: "🧼" },
-      { id: "paws", label: "擦脚爪", icon: "🐾" },
-      { id: "comb", label: "梳软毛", icon: "🪮" },
-      { id: "oil", label: "喂鱼油", icon: "🐟" },
-      { id: "teeth", label: "刷牙", icon: "🪥" }
+      { id: "beard", label: "饭后擦胡", icon: "🧼" },
+      { id: "paws", label: "爪间干燥", icon: "🐾" },
+      { id: "comb", label: "软毛梳理", icon: "🪮" },
+      { id: "teeth", label: "口腔观察", icon: "🪥" },
+      { id: "care", label: "专项目标", icon: "🥣" }
     ];
 
-    const DEFAULT_MEDS = [
-      { id: 1, name: "维克耳漂 (Epiotic)", usage: "溶解耳道分泌物，洗澡后滴入揉匀", expiry: "2027-08-30" },
-      { id: 2, name: "鱼油 / Omega-3", usage: "日常随饭喂食，加固敏感肌皮肤屏障", expiry: "2027-12-01" },
-      { id: 3, name: "皮特芬 / 银离子喷雾", usage: "趾间发红、腹部红疹消毒抑菌", expiry: "2027-05-15" }
+    // 默认周期项：初始执行日期全部为 null，绝不预设假数据
+    const INITIAL_CYCLES = [
+      { id: "ear_obs", name: "耳道状态观察 (按需清洁)", interval: 10, lastDate: null, desc: "立耳易积尘，排查异味与红肿" },
+      { id: "bath", name: "温和洗护与彻底吹干", interval: 14, lastDate: null, desc: "软毛打结前梳通，吹透皮毛底层" },
+      { id: "deworm_out", name: "体外驱虫计划 (按具体产品)", interval: 30, lastDate: null, desc: "录入实际产品后开始计时" },
+      { id: "deworm_in", name: "体内驱虫计划 (遵医嘱)", interval: 90, lastDate: null, desc: "幼犬根据生活环境遵医嘱起算" },
+      { id: "foot_hair", name: "脚垫毛修剪与防滑", interval: 21, lastDate: null, desc: "预防跑动打滑及趾间闷湿" }
     ];
 
-    let currentLogPhoto = null;
-    let currentSkinPhoto = null;
+    // 图片防竞态 Token 字典
+    let imageTaskTokens = { skin: 0, diary: 0, avatar: 0 };
+    let cachedSkinPhoto = null;
+    let cachedDiaryPhoto = null;
     let selectedCompareIds = [];
+    let currentEditCycleId = null;
+    let lastRenderedDate = "";
 
-    // 打开数据库
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains("settings")) db.createObjectStore("settings");
-      if (!db.objectStoreNames.contains("logs")) db.createObjectStore("logs", { keyPath: "id", autoIncrement: true });
-      if (!db.objectStoreNames.contains("skin_records")) db.createObjectStore("skin_records", { keyPath: "id", autoIncrement: true });
-      if (!db.objectStoreNames.contains("meds")) db.createObjectStore("meds", { keyPath: "id", autoIncrement: true });
-    };
-    request.onsuccess = (e) => {
-      db = e.target.result;
-      initApp();
-    };
-
-    async function initApp() {
-      const now = new Date();
-      document.getElementById('today-date').innerText = `${now.getMonth() + 1}月${now.getDate()}日`;
-      await loadProfile();
-      await renderDailyChecks();
-      await renderCycles();
-      await renderLogs();
-      await renderSkinRecords();
-      await renderMeds();
-    }
-
-    // Tab 切换控制
-    function switchTab(tabId) {
-      ['daily', 'skin', 'meds'].forEach(id => {
-        document.getElementById(`tab-${id}`).classList.add('hidden');
-        const btn = document.getElementById(`btn-tab-${id}`);
-        btn.classList.remove('text-amber-600', 'font-bold');
-        btn.classList.add('text-slate-400', 'font-medium');
+    // 1. 初始化数据库及表结构
+    function openDatabase() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = (e) => {
+          const d = e.target.result;
+          if (!d.objectStoreNames.contains("settings")) d.createObjectStore("settings");
+          if (!d.objectStoreNames.contains("cycles")) d.createObjectStore("cycles", { keyPath: "id" });
+          if (!d.objectStoreNames.contains("weights")) d.createObjectStore("weights", { keyPath: "id", autoIncrement: true });
+          if (!d.objectStoreNames.contains("teeth")) d.createObjectStore("teeth", { keyPath: "id", autoIncrement: true });
+          if (!d.objectStoreNames.contains("skin_records")) d.createObjectStore("skin_records", { keyPath: "id", autoIncrement: true });
+          if (!d.objectStoreNames.contains("diaries")) d.createObjectStore("diaries", { keyPath: "id", autoIncrement: true });
+          if (!d.objectStoreNames.contains("meds")) d.createObjectStore("meds", { keyPath: "id", autoIncrement: true });
+          if (!d.objectStoreNames.contains("daily_logs")) d.createObjectStore("daily_logs", { keyPath: "date" });
+        };
+        req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+        req.onerror = (e) => reject("DB Open Failed: " + e.target.error);
       });
-      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-      const activeBtn = document.getElementById(`btn-tab-${tabId}`);
-      activeBtn.classList.remove('text-slate-400', 'font-medium');
-      activeBtn.classList.add('text-amber-600', 'font-bold');
     }
 
-    // 档案与生日倒计时
-    async function loadProfile() {
-      const profile = await getSetting("profile") || { name: "小白", birthYear: 2024, weight: "7.5", avatar: null };
-      document.getElementById('dog-name').innerText = profile.name;
-      document.getElementById('dog-weight').innerText = `${profile.weight} kg ✏️`;
-      if (profile.avatar) {
-        document.getElementById('avatar-img').src = profile.avatar;
-        document.getElementById('avatar-img').classList.remove('hidden');
-        document.getElementById('avatar-placeholder').classList.add('hidden');
+    // 2. 核心：从旧数据库（WestieLifeDB_v2）无损热迁移
+    async function checkAndMigrateLegacyData() {
+      const isMigrated = await getSetting("legacy_migrated_v4");
+      if (isMigrated) return; // 已迁移过
+
+      const legacyDBName = "WestieLifeDB_v2";
+      const legacyExists = await new Promise(res => {
+        const req = indexedDB.open(legacyDBName);
+        req.onsuccess = (e) => {
+          const ldb = e.target.result;
+          const hasStores = ldb.objectStoreNames.contains("settings");
+          ldb.close();
+          res(hasStores);
+        };
+        req.onerror = () => res(false);
+      });
+
+      if (!legacyExists) {
+        await saveSetting("legacy_migrated_v4", true);
+        return;
       }
 
-      const now = new Date();
-      const totalMonths = (now.getFullYear() - profile.birthYear) * 12 + (now.getMonth() - 3);
-      const years = Math.floor(totalMonths / 12);
-      const months = Math.max(0, totalMonths % 12);
-      document.getElementById('age-desc').innerText = `出生于 ${profile.birthYear}.04.18 · ${years}岁${months}个月`;
-
-      let nextBday = new Date(now.getFullYear(), 3, 18);
-      if (now > nextBday) nextBday = new Date(now.getFullYear() + 1, 3, 18);
-      const diffDays = Math.ceil((nextBday - now) / (1000 * 60 * 60 * 24));
-      document.getElementById('bday-countdown').innerText = `🎂 距生辰 ${diffDays} 天`;
-    }
-
-    async function changeName() {
-      const profile = await getSetting("profile") || { name: "小白", birthYear: 2024, weight: "7.5" };
-      const val = prompt("输入小狗名字：", profile.name);
-      if (val) { profile.name = val; await saveSetting("profile", profile); loadProfile(); }
-    }
-
-    async function updateWeight() {
-      const profile = await getSetting("profile") || { name: "小白", birthYear: 2024, weight: "7.5" };
-      const val = prompt("更新称重 (kg)：", profile.weight);
-      if (val && !isNaN(val)) { profile.weight = parseFloat(val).toFixed(1); await saveSetting("profile", profile); loadProfile(); }
-    }
-
-    document.getElementById('avatar-input').addEventListener('change', function(e) {
-      if (e.target.files[0]) {
-        compressImage(e.target.files[0], 200, async (base64) => {
-          const profile = await getSetting("profile") || { name: "小白", birthYear: 2024, weight: "7.5" };
-          profile.avatar = base64;
-          await saveSetting("profile", profile);
-          loadProfile();
+      console.log("检测到旧版数据，开始安全转移...");
+      try {
+        const ldb = await new Promise((res, rej) => {
+          const req = indexedDB.open(legacyDBName);
+          req.onsuccess = () => res(req.target.result);
+          req.onerror = () => rej(req.error);
         });
+
+        // 读取旧数据
+        const oldProfile = await new Promise(res => {
+          const tx = ldb.transaction(["settings"], "readonly");
+          tx.objectStore("settings").get("profile").onsuccess = (e) => res(e.target.result);
+        });
+
+        const oldLogs = await new Promise(res => {
+          if (!ldb.objectStoreNames.contains("logs")) return res([]);
+          const tx = ldb.transaction(["logs"], "readonly");
+          tx.objectStore("logs").getAll().onsuccess = (e) => res(e.target.result);
+        });
+
+        const oldSkin = await new Promise(res => {
+          if (!ldb.objectStoreNames.contains("skin_records")) return res([]);
+          const tx = ldb.transaction(["skin_records"], "readonly");
+          tx.objectStore("skin_records").getAll().onsuccess = (e) => res(e.target.result);
+        });
+
+        const oldMeds = await new Promise(res => {
+          if (!ldb.objectStoreNames.contains("meds")) return res([]);
+          const tx = ldb.transaction(["meds"], "readonly");
+          tx.objectStore("meds").getAll().onsuccess = (e) => res(e.target.result);
+        });
+
+        ldb.close();
+
+        // 写入新数据库（旧库保持原样不动）
+        if (oldProfile) {
+          const newProfile = {
+            name: oldProfile.name || "Jasper",
+            birthDate: "2026-04-18",
+            avatar: oldProfile.avatar || null
+          };
+          await saveSetting("profile", newProfile);
+          if (oldProfile.weight) {
+            const wtx = db.transaction(["weights"], "readwrite");
+            wtx.objectStore("weights").add({ weight: parseFloat(oldProfile.weight), date: getTodayDateString(), note: "从旧档案自动导入", createdAt: Date.now() });
+          }
+        }
+
+        if (oldLogs && oldLogs.length > 0) {
+          const dtx = db.transaction(["diaries"], "readwrite");
+          const dstore = dtx.objectStore("diaries");
+          oldLogs.forEach(l => {
+            dstore.add({ text: l.text || "", photo: l.photo || null, date: getTodayDateString(), createdAt: Date.now() });
+          });
+        }
+
+        if (oldSkin && oldSkin.length > 0) {
+          const stx = db.transaction(["skin_records"], "readwrite");
+          const sstore = stx.objectStore("skin_records");
+          oldSkin.forEach(s => {
+            sstore.add({
+              location: s.location || "身体部位",
+              itchLevel: "未标注",
+              description: s.note || "",
+              photo: s.photo || null,
+              date: s.dateStr || getTodayDateString(),
+              createdAt: Date.now()
+            });
+          });
+        }
+
+        if (oldMeds && oldMeds.length > 0) {
+          const mtx = db.transaction(["meds"], "readwrite");
+          const mstore = mtx.objectStore("meds");
+          oldMeds.forEach(m => {
+            mstore.add({ name: m.name, usage: m.usage || "", exp: m.expiry || getTodayDateString(), createdAt: Date.now() });
+          });
+        }
+
+        await saveSetting("legacy_migrated_v4", true);
+        console.log("旧数据无损迁移完成！");
+      } catch (err) {
+        console.warn("自动迁移旧数据时遇到非阻断提示:", err);
+      }
+    }
+
+    // 3. 页面启动与跨午夜监听
+    window.addEventListener("DOMContentLoaded", async () => {
+      try {
+        await openDatabase();
+        await checkAndMigrateLegacyData();
+        await refreshAllViews();
+        document.getElementById("storage-status-desc").textContent = "数据库已就绪，所有记录均在本地持久化。";
+      } catch (e) {
+        alert("系统初始化异常: " + e);
       }
     });
 
-    // 日常打卡
-    function getTodayKey() { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
-    async function renderDailyChecks() {
-      const todayKey = getTodayKey();
-      const dailyRecord = await getSetting("daily_" + todayKey) || [];
-      const container = document.getElementById('daily-checks');
-      container.innerHTML = "";
-      DAILY_TASKS.forEach(t => {
-        const isDone = dailyRecord.includes(t.id);
-        const el = document.createElement('div');
-        el.className = `p-2 rounded-2xl cursor-pointer transition active:scale-95 ${isDone ? 'bg-amber-100 border border-amber-300' : 'bg-slate-50 border border-slate-100'}`;
-        el.innerHTML = `<span class="text-xl mb-1 block">${t.icon}</span><span class="text-[11px] font-medium ${isDone ? 'text-amber-900 font-bold' : 'text-slate-600'}">${t.label}</span>`;
-        el.onclick = async () => {
-          let rec = await getSetting("daily_" + todayKey) || [];
-          rec = rec.includes(t.id) ? rec.filter(x => x !== t.id) : [...rec, t.id];
-          await saveSetting("daily_" + todayKey, rec);
-          renderDailyChecks();
-        };
-        container.appendChild(el);
-      });
+    // 手机前台唤醒 / 跨午夜自动更新
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        const today = getTodayDateString();
+        if (today !== lastRenderedDate) {
+          refreshAllViews();
+        }
+      }
+    });
+
+    async function refreshAllViews() {
+      lastRenderedDate = getTodayDateString();
+      updateDateHeader();
+      await loadProfile();
+      await renderDailyChecks();
+      await renderCycles();
+      await renderTeethLogs();
+      await renderSkinList();
+      await renderDiaryList();
+      await renderMedsList();
+      await refreshLatestWeight();
     }
 
-    // 周期护理
-    async function renderCycles() {
-      let cycles = await getSetting("cycles") || DEFAULT_CYCLES;
-      const container = document.getElementById('cycle-items');
-      container.innerHTML = "";
+    function getTodayDateString() {
       const now = new Date();
-      cycles.forEach((item, idx) => {
-        const diff = Math.floor((now - new Date(item.lastDate)) / (1000 * 60 * 60 * 24));
-        const remain = item.interval - diff;
-        const progress = Math.max(0, Math.min(100, ((item.interval - remain) / item.interval) * 100));
-        let col = "bg-emerald-500";
-        if (remain <= 3) col = "bg-rose-500"; else if (remain <= 7) col = "bg-amber-500";
-        const div = document.createElement('div');
-        div.className = "border border-slate-100 p-2.5 rounded-xl bg-slate-50/50";
-        div.innerHTML = `
-          <div class="flex justify-between items-center text-xs mb-1">
-            <span class="font-semibold text-slate-800">${item.name}</span>
-            <div class="flex items-center gap-1.5">
-              <span class="font-bold ${remain <= 3 ? 'text-rose-600' : 'text-slate-600'}">${remain > 0 ? `剩 ${remain} 天` : '⚠️ 需立即处理'}</span>
-              <button onclick="resetCycle(${idx})" class="text-[10px] text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded-lg active:scale-95">刚完成</button>
-            </div>
-          </div>
-          <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-            <div class="${col} h-full transition-all" style="width: ${progress}%"></div>
-          </div>`;
-        container.appendChild(div);
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    }
+
+    function updateDateHeader() {
+      const now = new Date();
+      document.getElementById("disp-today-date").textContent = `${now.getMonth() + 1}月${now.getDate()}日`;
+    }
+
+    // 4. 辅助函数：安全 DOM 创建 (彻底杜绝 innerHTML 注入)
+    function dom(tag, attrs = {}, children = []) {
+      const el = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs)) {
+        if (k === "class") el.className = v;
+        else if (k === "style") el.style.cssText = v;
+        else if (k.startsWith("on")) el[k] = v;
+        else el.setAttribute(k, v);
+      }
+      if (typeof children === "string" || typeof children === "number") {
+        el.textContent = children;
+      } else if (Array.isArray(children)) {
+        children.forEach(c => { if (c) el.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+      }
+      return el;
+    }
+
+    function toggleElement(id) { document.getElementById(id).classList.toggle("hidden"); }
+    function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
+
+    // 5. 档案加载与精准日期计算
+    async function loadProfile() {
+      let p = await getSetting("profile") || { name: "Jasper", birthDate: "2026-04-18", avatar: null };
+      document.getElementById("disp-name").textContent = p.name;
+      if (p.avatar) {
+        const img = document.getElementById("avatar-img");
+        img.src = p.avatar;
+        img.classList.remove("hidden");
+        document.getElementById("avatar-emoji").classList.add("hidden");
+      }
+
+      // 年月日精准计算
+      const birth = new Date(p.birthDate + "T00:00:00");
+      const now = new Date();
+      let years = now.getFullYear() - birth.getFullYear();
+      let months = now.getMonth() - birth.getMonth();
+      let days = now.getDate() - birth.getDate();
+
+      if (days < 0) {
+        months -= 1;
+        const prevMonthLastDay = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+        days += prevMonthLastDay;
+      }
+      if (months < 0) {
+        years -= 1;
+        months += 12;
+      }
+
+      const totalMonths = years * 12 + months;
+      let ageText = "";
+      if (years === 0) {
+        ageText = `${months} 个月 ${days} 天 🍼`;
+      } else {
+        ageText = `${years} 岁 ${months} 个月`;
+      }
+      document.getElementById("disp-age").textContent = `出生于 ${p.birthDate} · ${ageText} ✏️`;
+
+      // 换牙期智能判断（4~8 月龄呈现高亮，其它阶段弱化/隐藏）
+      const teethCard = document.getElementById("teeth-card");
+      if (totalMonths >= 4 && totalMonths <= 8) {
+        teethCard.classList.remove("hidden");
+        document.getElementById("teeth-stage-badge").textContent = `换牙关键期 (${totalMonths}月龄)`;
+      } else {
+        document.getElementById("teeth-stage-badge").textContent = "常规排查";
+      }
+
+      // 生日当天及倒计时计算（防当天为 0 算成 365 的 Bug）
+      const bMonth = birth.getMonth();
+      const bDate = birth.getDate();
+      document.getElementById("disp-bday-title").textContent = `🎂 ${bMonth + 1}·${bDate} 生日倒计时`;
+
+      if (now.getMonth() === bMonth && now.getDate() === bDate) {
+        document.getElementById("disp-bday-countdown").textContent = "今天是生日！🎉";
+      } else {
+        let nextBday = new Date(now.getFullYear(), bMonth, bDate);
+        if (now > nextBday) nextBday.setFullYear(now.getFullYear() + 1);
+        const diffDays = Math.ceil((nextBday - now) / (1000 * 60 * 60 * 24));
+        document.getElementById("disp-bday-countdown").textContent = `${diffDays} 天`;
+      }
+    }
+
+    function openProfileModal() {
+      getSetting("profile").then(p => {
+        p = p || { name: "Jasper", birthDate: "2026-04-18" };
+        document.getElementById("edit-name").value = p.name;
+        document.getElementById("edit-birth").value = p.birthDate;
+        document.getElementById("modal-profile").classList.remove("hidden");
       });
     }
 
-    async function resetCycle(i) {
-      let cycles = await getSetting("cycles") || DEFAULT_CYCLES;
-      cycles[i].lastDate = new Date().toISOString();
-      await saveSetting("cycles", cycles);
-      renderCycles();
+    async function saveProfileModal() {
+      const name = document.getElementById("edit-name").value.trim() || "Jasper";
+      const birthDate = document.getElementById("edit-birth").value || "2026-04-18";
+      let p = await getSetting("profile") || {};
+      p.name = name;
+      p.birthDate = birthDate;
+      await saveSetting("profile", p);
+      closeModal("modal-profile");
+      await loadProfile();
     }
 
-    // 日常手记
-    function togglePostForm() { document.getElementById('post-form').classList.toggle('hidden'); }
-    function previewUpload(input) {
-      if (input.files && input.files[0]) {
-        document.getElementById('photo-filename').innerText = input.files[0].name;
-        compressImage(input.files[0], 800, b64 => currentLogPhoto = b64);
-      }
-    }
-    async function saveLog() {
-      const text = document.getElementById('log-text').value.trim();
-      if (!text && !currentLogPhoto) return alert("写点内容或附上照片吧！");
-      const log = {
-        date: new Date().toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
-        text: text,
-        photo: currentLogPhoto
-      };
-      const tx = db.transaction(["logs"], "readwrite");
-      tx.objectStore("logs").add(log);
-      tx.oncomplete = () => {
-        document.getElementById('log-text').value = "";
-        currentLogPhoto = null;
-        document.getElementById('photo-filename').innerText = "未选照片";
-        togglePostForm();
-        renderLogs();
-      };
-    }
-    async function renderLogs() {
-      const container = document.getElementById('logs-timeline');
+    // 头像防并发选图
+    document.getElementById("avatar-file").addEventListener("change", function(e) {
+      if (!e.target.files || !e.target.files[0]) return;
+      const file = e.target.files[0];
+      const token = ++imageTaskTokens.avatar;
+      compressImage(file, 200).then(async (b64) => {
+        if (token !== imageTaskTokens.avatar) return; // 丢弃过期选择
+        let p = await getSetting("profile") || { name: "Jasper", birthDate: "2026-04-18" };
+        p.avatar = b64;
+        await saveSetting("profile", p);
+        loadProfile();
+      }).finally(() => { e.target.value = ""; });
+    });
+
+    // 6. 今日打卡（保证原子写入，支持跨午夜自更新）
+    async function renderDailyChecks() {
+      const container = document.getElementById("daily-check-container");
       container.innerHTML = "";
-      const tx = db.transaction(["logs"], "readonly");
-      const req = tx.objectStore("logs").openCursor(null, "prev");
-      let count = 0;
-      req.onsuccess = (e) => {
-        const c = e.target.result;
-        if (c) {
-          count++;
-          const d = c.value;
-          const id = c.key;
-          const div = document.createElement('div');
-          div.className = "border border-slate-100 p-3 rounded-2xl bg-slate-50/50 space-y-2";
-          div.innerHTML = `
-            <div class="flex justify-between items-center text-xs text-slate-400">
-              <span>${d.date}</span>
-              <button onclick="deleteLog(${id})" class="text-slate-300 hover:text-rose-500">删除</button>
-            </div>
-            ${d.photo ? `<img src="${d.photo}" class="w-full max-h-56 object-cover rounded-xl">` : ''}
-            ${d.text ? `<p class="text-xs text-slate-800 leading-relaxed">${d.text}</p>` : ''}`;
-          container.appendChild(div);
-          c.continue();
-        } else if (count === 0) {
-          container.innerHTML = `<div class="text-center py-4 text-xs text-slate-400">还没有日常手记，点击上方记一笔吧 🐾</div>`;
+      const today = getTodayDateString();
+      const rec = await getRecordFromStore("daily_logs", today) || { date: today, tasks: [] };
+
+      DAILY_TASKS.forEach(task => {
+        const isDone = rec.tasks.includes(task.id);
+        const btn = dom("button", {
+          class: `check-btn ${isDone ? "active" : ""}`,
+          onclick: () => toggleDailyTask(task.id)
+        }, [
+          dom("span", { class: "icon" }, task.icon),
+          dom("span", { class: "label" }, task.label)
+        ]);
+        container.appendChild(btn);
+      });
+    }
+
+    async function toggleDailyTask(taskId) {
+      const today = getTodayDateString();
+      const tx = db.transaction(["daily_logs"], "readwrite");
+      const store = tx.objectStore("daily_logs");
+      const req = store.get(today);
+      req.onsuccess = () => {
+        let d = req.result || { date: today, tasks: [] };
+        if (d.tasks.includes(taskId)) {
+          d.tasks = d.tasks.filter(t => t !== taskId);
+        } else {
+          d.tasks.push(taskId);
         }
+        store.put(d);
       };
-    }
-    function deleteLog(id) {
-      if (confirm("删除这条手记吗？")) {
-        const tx = db.transaction(["logs"], "readwrite");
-        tx.objectStore("logs").delete(id);
-        tx.oncomplete = () => renderLogs();
-      }
+      tx.oncomplete = () => renderDailyChecks();
     }
 
-    // ================= 皮肤追踪与对比逻辑 =================
-    function previewSkinPhoto(input) {
-      if (input.files && input.files[0]) {
-        document.getElementById('skin-photo-tip').innerText = "已拍摄 ✅";
-        compressImage(input.files[0], 800, b64 => currentSkinPhoto = b64);
-      }
+    // 7. 体重追踪（保存真实历史，拒绝覆盖）
+    function openWeightModal() {
+      document.getElementById("weight-date").value = getTodayDateString();
+      document.getElementById("weight-input").value = "";
+      document.getElementById("weight-note").value = "";
+      renderWeightHistory();
+      document.getElementById("modal-weight").classList.remove("hidden");
     }
 
-    async function saveSkinRecord() {
-      if (!currentSkinPhoto) return alert("请先拍下小狗皮肤发红部位的照片！");
-      const location = document.getElementById('skin-location').value;
-      const note = document.getElementById('skin-note').value.trim();
-      const item = {
-        date: new Date().toISOString(),
-        dateStr: new Date().toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }),
-        location: location,
-        note: note || "日常红斑记录",
-        photo: currentSkinPhoto
-      };
-      const tx = db.transaction(["skin_records"], "readwrite");
-      tx.objectStore("skin_records").add(item);
-      tx.oncomplete = () => {
-        document.getElementById('skin-note').value = "";
-        document.getElementById('skin-photo-tip').innerText = "未拍摄";
-        currentSkinPhoto = null;
-        renderSkinRecords();
+    async function saveWeightRecord() {
+      const val = parseFloat(document.getElementById("weight-input").value);
+      const date = document.getElementById("weight-date").value;
+      const note = document.getElementById("weight-note").value.trim();
+      if (!val || val <= 0 || isNaN(val)) return alert("请输入合规的体重数值！");
+
+      const tx = db.transaction(["weights"], "readwrite");
+      tx.objectStore("weights").add({ weight: val, date: date || getTodayDateString(), note, createdAt: Date.now() });
+      tx.oncomplete = async () => {
+        closeModal("modal-weight");
+        await refreshLatestWeight();
       };
     }
 
-    async function renderSkinRecords() {
-      const container = document.getElementById('skin-records-list');
-      container.innerHTML = "";
-      selectedCompareIds = [];
-      const tx = db.transaction(["skin_records"], "readonly");
-      const req = tx.objectStore("skin_records").openCursor(null, "prev");
-      let count = 0;
-      req.onsuccess = (e) => {
-        const c = e.target.result;
-        if (c) {
-          count++;
-          const d = c.value;
-          const id = c.key;
-          const card = document.createElement('div');
-          card.className = "flex gap-3 border border-slate-100 p-2.5 rounded-2xl bg-slate-50/50 items-center";
-          card.innerHTML = `
-            <input type="checkbox" onchange="toggleCompareCheck(${id})" class="rounded text-amber-600 focus:ring-0 w-4 h-4 ml-1">
-            <img src="${d.photo}" class="w-16 h-16 object-cover rounded-xl flex-shrink-0" alt="皮肤红斑">
-            <div class="flex-1 min-w-0">
-              <div class="flex justify-between items-center">
-                <span class="text-xs font-bold text-slate-800 truncate">${d.location}</span>
-                <span class="text-[10px] text-slate-400">${d.dateStr}</span>
-              </div>
-              <p class="text-[11px] text-slate-600 mt-1 line-clamp-2">${d.note}</p>
-            </div>
-            <button onclick="deleteSkin(${id})" class="text-[10px] text-slate-300 hover:text-rose-500 pr-1">✕</button>`;
-          container.appendChild(card);
-          c.continue();
-        } else if (count === 0) {
-          container.innerHTML = `<div class="text-center py-6 text-xs text-slate-400">目前没有皮肤红斑记录。拍一张记录皮肤状态吧！</div>`;
+    async function refreshLatestWeight() {
+      const tx = db.transaction(["weights"], "readonly");
+      const req = tx.objectStore("weights").getAll();
+      req.onsuccess = () => {
+        const list = req.result || [];
+        if (list.length > 0) {
+          list.sort((a, b) => new Date(b.date) - new Date(a.date));
+          document.getElementById("disp-weight").textContent = `${list[0].weight.toFixed(2)} kg`;
+        } else {
+          document.getElementById("disp-weight").textContent = "未记录";
         }
       };
     }
 
-    function toggleCompareCheck(id) {
-      if (selectedCompareIds.includes(id)) {
-        selectedCompareIds = selectedCompareIds.filter(x => x !== id);
-      } else {
-        if (selectedCompareIds.length >= 2) {
-          alert("对比模式最多同时勾选 2 张照片！");
+    async function renderWeightHistory() {
+      const box = document.getElementById("weight-history-list");
+      box.innerHTML = "";
+      const tx = db.transaction(["weights"], "readonly");
+      tx.objectStore("weights").getAll().onsuccess = (e) => {
+        const list = e.target.result || [];
+        list.sort((a, b) => new Date(b.date) - new Date(a.date));
+        if (list.length === 0) {
+          box.appendChild(dom("div", { style: "font-size:12px;color:var(--text-muted);" }, "暂无历史记录"));
           return;
         }
-        selectedCompareIds.push(id);
-      }
-    }
-
-    async function launchCompare() {
-      if (selectedCompareIds.length !== 2) return alert("请先勾选列表中任意 2 条记录进行对比！");
-      const tx = db.transaction(["skin_records"], "readonly");
-      const store = tx.objectStore("skin_records");
-      const rec1 = await getRecordById(store, selectedCompareIds[0]);
-      const rec2 = await getRecordById(store, selectedCompareIds[1]);
-      
-      // 按时间先后排序：[较早记录, 较晚记录]
-      const [earlier, later] = new Date(rec1.date) < new Date(rec2.date) ? [rec1, rec2] : [rec2, rec1];
-      const diffDays = Math.round(Math.abs(new Date(later.date) - new Date(earlier.date)) / (1000 * 60 * 60 * 24));
-
-      const body = document.getElementById('compare-body');
-      body.innerHTML = `
-        <div class="space-y-1.5">
-          <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">第 1 次记录 (${earlier.dateStr})</span>
-          <img src="${earlier.photo}" class="w-full h-44 object-cover rounded-xl">
-          <p class="text-[11px] text-slate-700">${earlier.note}</p>
-        </div>
-        <div class="space-y-1.5">
-          <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">第 2 次对比 (${later.dateStr} · 间隔${diffDays}天)</span>
-          <img src="${later.photo}" class="w-full h-44 object-cover rounded-xl">
-          <p class="text-[11px] text-slate-700">${later.note}</p>
-        </div>`;
-      document.getElementById('compare-modal').classList.remove('hidden');
-    }
-
-    function closeCompareModal() { document.getElementById('compare-modal').classList.add('hidden'); }
-    function getRecordById(store, id) {
-      return new Promise(res => { store.get(id).onsuccess = (e) => res(e.target.result); });
-    }
-    function deleteSkin(id) {
-      if (confirm("确定删除这条皮肤记录吗？")) {
-        const tx = db.transaction(["skin_records"], "readwrite");
-        tx.objectStore("skin_records").delete(id);
-        tx.oncomplete = () => renderSkinRecords();
-      }
-    }
-
-    // ================= 常备药箱逻辑 =================
-    function toggleMedForm() { document.getElementById('med-form').classList.toggle('hidden'); }
-    async function saveMed() {
-      const name = document.getElementById('med-name').value.trim();
-      const usage = document.getElementById('med-usage').value.trim();
-      const expiry = document.getElementById('med-expiry').value;
-      if (!name || !expiry) return alert("请填写药品名称和到期时间！");
-      const item = { name, usage, expiry };
-      const tx = db.transaction(["meds"], "readwrite");
-      tx.objectStore("meds").add(item);
-      tx.oncomplete = () => {
-        document.getElementById('med-name').value = "";
-        document.getElementById('med-usage').value = "";
-        document.getElementById('med-expiry').value = "";
-        toggleMedForm();
-        renderMeds();
+        list.forEach(item => {
+          box.appendChild(dom("div", { style: "font-size:12px;display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f1f5f9;" }, [
+            dom("span", {}, `${item.date} : ${item.weight} kg`),
+            dom("span", { style: "color:var(--text-muted);" }, item.note || "")
+          ]));
+        });
       };
     }
 
-    async function renderMeds() {
-      const container = document.getElementById('meds-list');
+    // 8. 换牙期记录
+    function openTeethModal() {
+      document.getElementById("teeth-note").value = "";
+      document.getElementById("modal-teeth").classList.remove("hidden");
+    }
+
+    async function saveTeethRecord() {
+      const type = document.getElementById("teeth-type").value;
+      const note = document.getElementById("teeth-note").value.trim();
+      const tx = db.transaction(["teeth"], "readwrite");
+      tx.objectStore("teeth").add({ type, note, date: getTodayDateString(), createdAt: Date.now() });
+      tx.oncomplete = () => {
+        closeModal("modal-teeth");
+        renderTeethLogs();
+      };
+    }
+
+    async function renderTeethLogs() {
+      const box = document.getElementById("teeth-logs");
+      box.innerHTML = "";
+      const tx = db.transaction(["teeth"], "readonly");
+      tx.objectStore("teeth").getAll().onsuccess = (e) => {
+        const list = e.target.result || [];
+        list.sort((a, b) => b.createdAt - a.createdAt);
+        if (list.length === 0) {
+          box.appendChild(dom("div", { style: "font-size:11px;color:#9a3412;" }, "暂无记录。发现乳牙脱落或恒牙萌出可点击上方添加。"));
+          return;
+        }
+        list.slice(0, 3).forEach(item => {
+          box.appendChild(dom("div", { style: "font-size:11px;background:#ffedd5;padding:6px 10px;border-radius:8px;color:#7c2d12;" }, [
+            dom("strong", {}, `[${item.date}] ${item.type}`),
+            item.note ? dom("span", {}, ` - ${item.note}`) : null
+          ]));
+        });
+      };
+    }
+
+    // 9. 周期日程（拒绝假装已完成）
+    async function renderCycles() {
+      const container = document.getElementById("cycle-list");
       container.innerHTML = "";
-      const tx = db.transaction(["meds"], "readonly");
-      const req = tx.objectStore("meds").getAll();
-      req.onsuccess = async () => {
-        let meds = req.result;
-        // 第一次打开如果药箱为空，自动填充西高地常用药品预设
-        if (meds.length === 0) {
-          const wtx = db.transaction(["meds"], "readwrite");
-          for (let m of DEFAULT_MEDS) wtx.objectStore("meds").add(m);
-          wtx.oncomplete = () => renderMeds();
+      const tx = db.transaction(["cycles"], "readonly");
+      tx.objectStore("cycles").getAll().onsuccess = (e) => {
+        let list = e.target.result || [];
+        if (list.length === 0) {
+          const wtx = db.transaction(["cycles"], "readwrite");
+          const store = wtx.objectStore("cycles");
+          INITIAL_CYCLES.forEach(c => store.add(c));
+          wtx.oncomplete = () => renderCycles();
           return;
         }
 
         const now = new Date();
-        meds.forEach(med => {
-          const expDate = new Date(med.expiry);
-          const diffDays = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
-          let badge = `<span class="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">正常 (剩 ${diffDays} 天)</span>`;
-          if (diffDays <= 0) {
-            badge = `<span class="text-[10px] text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200 font-bold">⚠️ 已过期</span>`;
-          } else if (diffDays <= 30) {
-            badge = `<span class="text-[10px] text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 font-bold">即将到期 (剩 ${diffDays} 天)</span>`;
+        list.forEach(c => {
+          let statusText = "待设定实际执行日";
+          let progress = 0;
+          let progressColor = "#10b981";
+
+          if (c.lastDate) {
+            const last = new Date(c.lastDate + "T00:00:00");
+            const diffDays = Math.floor((now - last) / (1000 * 60 * 60 * 24));
+            const remain = c.interval - diffDays;
+            progress = Math.max(0, Math.min(100, ((c.interval - remain) / c.interval) * 100));
+
+            if (remain <= 0) {
+              statusText = `已到期 (已过 ${Math.abs(remain)} 天)`;
+              progressColor = "#ef4444";
+            } else if (remain <= 3) {
+              statusText = `还剩 ${remain} 天 (临近)`;
+              progressColor = "#f59e0b";
+            } else {
+              statusText = `还剩 ${remain} 天`;
+            }
           }
 
-          const div = document.createElement('div');
-          div.className = "border border-slate-100 p-3 rounded-2xl bg-slate-50/50 space-y-1";
-          div.innerHTML = `
-            <div class="flex justify-between items-center">
-              <span class="text-xs font-bold text-slate-800">${med.name}</span>
-              ${badge}
-            </div>
-            <p class="text-[11px] text-slate-500">${med.usage || '无特别用法说明'}</p>
-            <div class="flex justify-between items-center text-[10px] text-slate-400 pt-1 border-t border-slate-100 mt-1">
-              <span>到期日: ${med.expiry}</span>
-              <button onclick="deleteMed(${med.id})" class="text-slate-300 hover:text-rose-500">移除药品</button>
-            </div>`;
-          container.appendChild(div);
+          const card = dom("div", { class: "list-item" }, [
+            dom("div", { style: "display:flex;justify-content:space-between;align-items:center;" }, [
+              dom("strong", { style: "font-size:13px;" }, c.name),
+              dom("button", { class: "btn btn-sm btn-outline", onclick: () => openEditCycleModal(c.id, c.name, c.interval) }, "更新日程")
+            ]),
+            dom("div", { style: "font-size:11px;color:var(--text-muted);margin-top:2px;" }, c.desc),
+            dom("div", { style: "display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-top:6px;" }, [
+              dom("span", { style: "color:var(--text-muted);" }, c.lastDate ? `上次执行: ${c.lastDate}` : "尚无执行记录"),
+              dom("strong", { style: `color:${progressColor};` }, statusText)
+            ]),
+            dom("div", { class: "progress-bar-bg" }, [
+              dom("div", { class: "progress-bar-fill", style: `width:${progress}%;background:${progressColor};` })
+            ])
+          ]);
+          container.appendChild(card);
         });
       };
     }
 
-    function deleteMed(id) {
-      if (confirm("确定移除该药品记录？")) {
-        const tx = db.transaction(["meds"], "readwrite");
-        tx.objectStore("meds").delete(id);
-        tx.oncomplete = () => renderMeds();
+    function openEditCycleModal(id, name, interval) {
+      currentEditCycleId = id;
+      document.getElementById("cycle-edit-title").textContent = `更新：${name}`;
+      document.getElementById("cycle-date-input").value = getTodayDateString();
+      document.getElementById("cycle-interval-input").value = interval;
+      document.getElementById("modal-cycle-edit").classList.remove("hidden");
+    }
+
+    async function confirmSaveCycle() {
+      const date = document.getElementById("cycle-date-input").value;
+      const interval = parseInt(document.getElementById("cycle-interval-input").value, 10);
+      if (!date || isNaN(interval) || interval <= 0) return alert("请填写合规的日期与循环天数！");
+
+      const tx = db.transaction(["cycles"], "readwrite");
+      const store = tx.objectStore("cycles");
+      const req = store.get(currentEditCycleId);
+      req.onsuccess = () => {
+        let item = req.result;
+        if (item) {
+          item.lastDate = date;
+          item.interval = interval;
+          store.put(item);
+        }
+      };
+      tx.oncomplete = () => {
+        closeModal("modal-cycle-edit");
+        renderCycles();
+      };
+    }
+
+    // 10. 图片防并发选图处理 (Token 校验，解决乱序)
+    function compressImage(file, maxDimension = 1200) {
+      return new Promise((resolve, reject) => {
+        if (!file || !file.type.startsWith("image/")) return reject("无效的图片格式");
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            let w = img.width, h = img.height;
+            if (w > maxDimension || h > maxDimension) {
+              if (w > h) { h = Math.round((h * maxDimension) / w); w = maxDimension; }
+              else { w = Math.round((w * maxDimension) / h); h = maxDimension; }
+            }
+            const canvas = document.createElement("canvas");
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL("image/jpeg", 0.82));
+          };
+          img.onerror = () => reject("图片解析失败");
+          img.src = e.target.result;
+        };
+        reader.onerror = () => reject("文件读取异常");
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handlePhotoSelect(input, type) {
+      if (!input.files || !input.files[0]) return;
+      const file = input.files[0];
+      const tip = document.getElementById(type === "skin" ? "skin-file-tip" : "diary-file-tip");
+      const btn = document.getElementById(type === "skin" ? "btn-save-skin" : "btn-save-diary");
+      
+      const currentToken = ++imageTaskTokens[type];
+      tip.textContent = "压缩处理中...";
+      btn.disabled = true;
+
+      try {
+        const b64 = await compressImage(file, type === "skin" ? 1400 : 1000);
+        if (currentToken !== imageTaskTokens[type]) return; // 已被更新的任务覆盖
+
+        if (type === "skin") {
+          cachedSkinPhoto = b64;
+          document.getElementById("skin-preview-img").src = b64;
+          document.getElementById("skin-preview-box").classList.remove("hidden");
+        } else {
+          cachedDiaryPhoto = b64;
+          document.getElementById("diary-preview-img").src = b64;
+          document.getElementById("diary-preview-box").classList.remove("hidden");
+        }
+        tip.textContent = "图片就绪 ✅";
+      } catch (err) {
+        if (currentToken === imageTaskTokens[type]) {
+          alert("图片处理未完成: " + err);
+          tip.textContent = "处理失败";
+        }
+      } finally {
+        if (currentToken === imageTaskTokens[type]) {
+          btn.disabled = false;
+        }
+        input.value = ""; // 重置文件输入，允许连选同图
       }
     }
 
-    // 辅助函数：图片压缩与通用存储
-    function compressImage(file, maxWidth, callback) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let w = img.width, h = img.height;
-          if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
-          canvas.width = w; canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          callback(canvas.toDataURL('image/jpeg', 0.8));
-        };
-        img.src = e.target.result;
+    // 11. 皮肤病程
+    async function saveSkinRecord() {
+      const loc = document.getElementById("skin-loc").value;
+      const itch = document.getElementById("skin-itch").value;
+      const desc = document.getElementById("skin-desc").value.trim();
+
+      if (!desc && !cachedSkinPhoto) return alert("请至少填写观察描述或拍一张照片！");
+
+      const btn = document.getElementById("btn-save-skin");
+      btn.disabled = true;
+
+      const record = {
+        location: loc,
+        itchLevel: itch,
+        description: desc,
+        photo: cachedSkinPhoto,
+        date: getTodayDateString(),
+        createdAt: Date.now()
       };
-      reader.readAsDataURL(file);
+
+      const tx = db.transaction(["skin_records"], "readwrite");
+      tx.objectStore("skin_records").add(record);
+      tx.oncomplete = () => {
+        document.getElementById("skin-desc").value = "";
+        document.getElementById("skin-preview-box").classList.add("hidden");
+        document.getElementById("skin-file-tip").textContent = "可选传图";
+        cachedSkinPhoto = null;
+        btn.disabled = false;
+        renderSkinList();
+      };
     }
+
+    async function renderSkinList() {
+      const listEl = document.getElementById("skin-records-list");
+      listEl.innerHTML = "";
+      selectedCompareIds = [];
+
+      const tx = db.transaction(["skin_records"], "readonly");
+      tx.objectStore("skin_records").getAll().onsuccess = (e) => {
+        const list = e.target.result || [];
+        list.sort((a, b) => b.createdAt - a.createdAt);
+        if (list.length === 0) {
+          listEl.appendChild(dom("div", { style: "font-size:12px;color:var(--text-muted);padding:8px 0;" }, "暂无异常记录。"));
+          return;
+        }
+
+        list.forEach(item => {
+          const row = dom("div", { class: "list-item", style: "display:flex;gap:10px;align-items:flex-start;" }, [
+            item.photo ? dom("input", {
+              type: "checkbox",
+              style: "margin-top:6px;width:18px;height:18px;",
+              onchange: (ev) => toggleCompareSelect(item.id, ev.target)
+            }) : dom("span", { style: "width:18px;" }),
+            item.photo ? dom("img", { src: item.photo, style: "width:60px;height:60px;object-fit:cover;border-radius:10px;flex-shrink:0;background:#000;" }) : null,
+            dom("div", { style: "flex:1;min-width:0;" }, [
+              dom("div", { style: "display:flex;justify-content:space-between;" }, [
+                dom("strong", { style: "font-size:13px;" }, item.location),
+                dom("span", { style: "font-size:11px;color:var(--text-muted);" }, item.date)
+              ]),
+              dom("div", { style: "font-size:11px;color:#b45309;margin-top:2px;" }, item.itchLevel),
+              dom("div", { style: "font-size:12px;color:var(--text-main);margin-top:4px;" }, item.description || "")
+            ]),
+            dom("button", { style: "font-size:11px;color:var(--text-muted);padding:4px;", onclick: () => deleteRecord("skin_records", item.id, renderSkinList) }, "删除")
+          ]);
+          listEl.appendChild(row);
+        });
+      };
+    }
+
+    function toggleCompareSelect(id, checkbox) {
+      if (checkbox.checked) {
+        if (selectedCompareIds.length >= 2) {
+          checkbox.checked = false;
+          return alert("对比模式仅限同时勾选 2 条照片记录！");
+        }
+        selectedCompareIds.push(id);
+      } else {
+        selectedCompareIds = selectedCompareIds.filter(x => x !== id);
+      }
+    }
+
+    async function launchCompare() {
+      if (selectedCompareIds.length !== 2) return alert("请先在列表中勾选 2 条带照片的记录进行对比！");
+      const tx = db.transaction(["skin_records"], "readonly");
+      const store = tx.objectStore("skin_records");
+      const [r1, r2] = await Promise.all([
+        new Promise(res => { store.get(selectedCompareIds[0]).onsuccess = e => res(e.target.result); }),
+        new Promise(res => { store.get(selectedCompareIds[1]).onsuccess = e => res(e.target.result); })
+      ]);
+
+      const [earlier, later] = r1.createdAt < r2.createdAt ? [r1, r2] : [r2, r1];
+      const diffDays = Math.round(Math.abs(later.createdAt - earlier.createdAt) / (1000 * 60 * 60 * 24));
+
+      const modalBody = document.getElementById("compare-modal-body");
+      modalBody.innerHTML = "";
+
+      const makeCard = (title, record) => dom("div", { style: "display:flex;flex-direction:column;gap:6px;" }, [
+        dom("div", { style: "font-size:12px;font-weight:700;color:var(--text-main);" }, title),
+        dom("img", { src: record.photo, class: "compare-img-box" }),
+        dom("div", { style: "font-size:12px;color:var(--text-muted);" }, `${record.location} | ${record.itchLevel}`),
+        dom("div", { style: "font-size:12px;" }, record.description || "")
+      ]);
+
+      modalBody.appendChild(makeCard(`前期状态 (${earlier.date})`, earlier));
+      modalBody.appendChild(makeCard(`后期状态 (${later.date} · 间隔 ${diffDays} 天)`, later));
+
+      document.getElementById("modal-compare").classList.remove("hidden");
+    }
+
+    // 12. 日常手记
+    async function saveDiary() {
+      const text = document.getElementById("diary-text").value.trim();
+      if (!text && !cachedDiaryPhoto) return alert("请填写内容或上传照片！");
+
+      const btn = document.getElementById("btn-save-diary");
+      btn.disabled = true;
+
+      const tx = db.transaction(["diaries"], "readwrite");
+      tx.objectStore("diaries").add({ text, photo: cachedDiaryPhoto, date: getTodayDateString(), createdAt: Date.now() });
+      tx.oncomplete = () => {
+        document.getElementById("diary-text").value = "";
+        document.getElementById("diary-preview-box").classList.add("hidden");
+        cachedDiaryPhoto = null;
+        btn.disabled = false;
+        toggleElement("log-form");
+        renderDiaryList();
+      };
+    }
+
+    async function renderDiaryList() {
+      const container = document.getElementById("diary-list");
+      container.innerHTML = "";
+      const tx = db.transaction(["diaries"], "readonly");
+      tx.objectStore("diaries").getAll().onsuccess = (e) => {
+        const list = e.target.result || [];
+        list.sort((a, b) => b.createdAt - a.createdAt);
+        if (list.length === 0) {
+          container.appendChild(dom("div", { style: "font-size:12px;color:var(--text-muted);padding:8px 0;" }, "暂无手记，点击右上角记录 Jasper 的今天吧 🐾"));
+          return;
+        }
+
+        list.forEach(item => {
+          const card = dom("div", { class: "list-item" }, [
+            dom("div", { style: "display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text-muted);margin-bottom:6px;" }, [
+              dom("span", {}, item.date),
+              dom("button", { style: "color:var(--text-muted);padding:4px;", onclick: () => deleteRecord("diaries", item.id, renderDiaryList) }, "删除")
+            ]),
+            item.photo ? dom("img", { src: item.photo, style: "width:100%;max-height:240px;object-fit:cover;border-radius:12px;margin-bottom:6px;background:#000;" }) : null,
+            item.text ? dom("p", { style: "font-size:13px;line-height:1.6;" }, item.text) : null
+          ]);
+          container.appendChild(card);
+        });
+      };
+    }
+
+    // 13. 真实药箱 (绝不伪造示例)
+    async function saveMedRecord() {
+      const name = document.getElementById("med-name").value.trim();
+      const usage = document.getElementById("med-usage").value.trim();
+      const exp = document.getElementById("med-exp").value;
+      if (!name || !exp) return alert("请填写药品名称与到期时间！");
+
+      const tx = db.transaction(["meds"], "readwrite");
+      tx.objectStore("meds").add({ name, usage, exp, createdAt: Date.now() });
+      tx.oncomplete = () => {
+        document.getElementById("med-name").value = "";
+        document.getElementById("med-usage").value = "";
+        document.getElementById("med-exp").value = "";
+        toggleElement("med-form");
+        renderMedsList();
+      };
+    }
+
+    async function renderMedsList() {
+      const container = document.getElementById("meds-list");
+      container.innerHTML = "";
+      const tx = db.transaction(["meds"], "readonly");
+      tx.objectStore("meds").getAll().onsuccess = (e) => {
+        const list = e.target.result || [];
+        if (list.length === 0) {
+          container.appendChild(dom("div", { style: "font-size:12px;color:var(--text-muted);padding:8px 0;" }, "药箱目前为空。家中备有实际药品或外用护理液可点击右上角录入。"));
+          return;
+        }
+
+        const now = new Date();
+        list.forEach(item => {
+          const expDate = new Date(item.exp + "T00:00:00");
+          const diffDays = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
+          let badgeColor = "badge-gray";
+          let badgeText = `剩 ${diffDays} 天`;
+
+          if (diffDays <= 0) {
+            badgeColor = "badge";
+            badgeText = "⚠️ 已过期";
+          } else if (diffDays <= 30) {
+            badgeColor = "badge-amber";
+            badgeText = `临期 (剩 ${diffDays} 天)`;
+          }
+
+          const card = dom("div", { class: "list-item" }, [
+            dom("div", { style: "display:flex;justify-content:space-between;align-items:center;" }, [
+              dom("strong", { style: "font-size:13px;" }, item.name),
+              dom("span", { class: `badge ${badgeColor}`, style: diffDays <= 0 ? "background:#fee2e2;color:#991b1b;" : "" }, badgeText)
+            ]),
+            item.usage ? dom("div", { style: "font-size:11px;color:var(--text-muted);margin-top:2px;" }, item.usage) : null,
+            dom("div", { style: "display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:11px;color:var(--text-muted);" }, [
+              dom("span", {}, `效期至: ${item.exp}`),
+              dom("button", { style: "color:var(--text-muted);padding:4px;", onclick: () => deleteRecord("meds", item.id, renderMedsList) }, "移除")
+            ])
+          ]);
+          container.appendChild(card);
+        });
+      };
+    }
+
+    // 14. 完整数据备份与高可靠原子导入 (含前置校验与回滚保障)
+    async function exportFullBackup() {
+      const stores = ["cycles", "weights", "teeth", "skin_records", "diaries", "meds", "daily_logs"];
+      const backupData = {
+        app: "JasperLifeApp",
+        version: DB_VERSION,
+        exportDate: new Date().toISOString(),
+        settings: {},
+        data: {}
+      };
+
+      const tx = db.transaction([...stores, "settings"], "readonly");
+      for (const s of stores) {
+        backupData.data[s] = await new Promise(res => {
+          tx.objectStore(s).getAll().onsuccess = (e) => res(e.target.result);
+        });
+      }
+
+      backupData.settings["profile"] = await new Promise(res => {
+        tx.objectStore("settings").get("profile").onsuccess = (e) => res(e.target.result);
+      });
+
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Jasper_FullBackup_${getTodayDateString()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function importFullBackup(input) {
+      if (!input.files || !input.files[0]) return;
+      const file = input.files[0];
+      const reader = new FileReader();
+
+      reader.onload = async (e) => {
+        try {
+          const json = JSON.parse(e.target.result);
+          // 严格前置格式校验
+          if (!json || json.app !== "JasperLifeApp" || !json.data) {
+            return alert("无效的备份文件：缺少 Jasper 专属结构签名！未做任何更改。");
+          }
+
+          const stores = ["cycles", "weights", "teeth", "skin_records", "diaries", "meds", "daily_logs"];
+          const counts = stores.map(s => `${s}: ${Array.isArray(json.data[s]) ? json.data[s].length : 0} 条`).join("\n");
+
+          if (!confirm(`备份验证通过！\n\n预计恢复内容：\n${counts}\n\n是否确认恢复？当前所有本地数据将被覆盖。`)) {
+            return;
+          }
+
+          // 单个原子化事务，失败整体自动回滚
+          const tx = db.transaction([...stores, "settings"], "readwrite");
+          tx.onerror = (err) => {
+            alert("导入异常，事务已安全回滚：" + err.target.error);
+          };
+
+          for (const s of stores) {
+            const store = tx.objectStore(s);
+            store.clear();
+            if (Array.isArray(json.data[s])) {
+              json.data[s].forEach(item => store.put(item));
+            }
+          }
+
+          if (json.settings && json.settings["profile"]) {
+            tx.objectStore("settings").put(json.settings["profile"], "profile");
+          }
+
+          tx.oncomplete = () => {
+            alert("全部记录与照片已成功还原！页面将自动刷新。");
+            location.reload();
+          };
+        } catch (err) {
+          alert("文件解析失败: " + err);
+        } finally {
+          input.value = "";
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // 15. 底层存储辅助
+    function deleteRecord(storeName, id, callback) {
+      if (!confirm("确定删除这条记录吗？")) return;
+      const tx = db.transaction([storeName], "readwrite");
+      tx.objectStore(storeName).delete(id);
+      tx.oncomplete = () => { if (callback) callback(); };
+    }
+
     function saveSetting(k, v) {
-      return new Promise(r => { const tx = db.transaction(["settings"], "readwrite"); tx.objectStore("settings").put(v, k); tx.oncomplete = () => r(); });
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(["settings"], "readwrite");
+        tx.objectStore("settings").put(v, k);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
     }
+
     function getSetting(k) {
-      return new Promise(r => { const tx = db.transaction(["settings"], "readonly"); const q = tx.objectStore("settings").get(k); q.onsuccess = () => r(q.result); });
+      return new Promise((resolve) => {
+        const tx = db.transaction(["settings"], "readonly");
+        const req = tx.objectStore("settings").get(k);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    function getRecordFromStore(storeName, key) {
+      return new Promise((resolve) => {
+        const tx = db.transaction([storeName], "readonly");
+        const req = tx.objectStore(storeName).get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    function switchNav(viewId, btn) {
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.add("hidden"));
+      document.querySelectorAll(".tab-item").forEach(b => b.classList.remove("active"));
+      document.getElementById(`view-${viewId}`).classList.remove("hidden");
+      btn.classList.add("active");
+      window.scrollTo(0, 0);
     }
   </script>
 </body>
