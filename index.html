@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>西高地日常手记</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { -webkit-tap-highlight-color: transparent; user-select: none; }
+    input, textarea, select { user-select: auto; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased pb-24">
+
+  <!-- 顶部常驻档案卡 -->
+  <header class="bg-white px-5 pt-6 pb-4 shadow-sm rounded-b-3xl">
+    <div class="flex items-center gap-3">
+      <div class="relative w-14 h-14 rounded-full bg-amber-50 border-2 border-amber-200 flex items-center justify-center overflow-hidden flex-shrink-0" onclick="document.getElementById('avatar-input').click()">
+        <img id="avatar-img" src="" class="w-full h-full object-cover hidden" alt="头像">
+        <span id="avatar-placeholder" class="text-xl">🐶</span>
+        <input type="file" id="avatar-input" accept="image/*" class="hidden">
+      </div>
+      <div class="flex-1">
+        <div class="flex items-center gap-2">
+          <h1 id="dog-name" class="text-lg font-bold text-slate-900" onclick="changeName()">小白</h1>
+          <span class="text-[11px] bg-blue-100 text-blue-700 font-semibold px-2 py-0.5 rounded-full">♂ 男孩</span>
+          <span class="text-[11px] bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full">软毛西高地</span>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-0.5" id="age-desc">计算年龄中...</p>
+      </div>
+      <div class="flex flex-col items-end gap-1">
+        <span class="text-[11px] bg-amber-50 text-amber-800 font-semibold px-2 py-1 rounded-lg border border-amber-200" id="bday-countdown">4·18 倒计时</span>
+        <span class="text-[11px] text-slate-400" id="dog-weight" onclick="updateWeight()">7.5 kg ✏️</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= 页面 1：日常打卡与手记 ================= -->
+  <main id="tab-daily" class="px-4 mt-4 space-y-4 max-w-md mx-auto">
+    <!-- 今日护理打卡 -->
+    <section class="bg-white p-4 rounded-2xl shadow-sm">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+          <span>✨</span> 今日护理打卡
+        </h2>
+        <span class="text-[11px] text-slate-400" id="today-date"></span>
+      </div>
+      <div class="grid grid-cols-5 gap-2 text-center" id="daily-checks"></div>
+    </section>
+
+    <!-- 周期护理预警 -->
+    <section class="bg-white p-4 rounded-2xl shadow-sm">
+      <h2 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-1.5">
+        <span>⏳</span> 周期护理与驱虫进度
+      </h2>
+      <div class="space-y-3" id="cycle-items"></div>
+    </section>
+
+    <!-- 成长手记瀑布流 -->
+    <section class="bg-white p-4 rounded-2xl shadow-sm">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+          <span>📷</span> 西高地日常手记
+        </h2>
+        <button onclick="togglePostForm()" class="text-xs bg-slate-900 text-white px-3 py-1.5 rounded-full font-medium active:scale-95 transition">+ 记一笔</button>
+      </div>
+
+      <div id="post-form" class="hidden border-b border-slate-100 pb-4 mb-4">
+        <textarea id="log-text" rows="2" placeholder="今天小狗表现如何？" class="w-full text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-slate-400 resize-none"></textarea>
+        <div class="flex items-center justify-between mt-2.5">
+          <label class="text-xs text-slate-500 bg-slate-100 px-3 py-2 rounded-xl cursor-pointer flex items-center gap-1.5 active:bg-slate-200">
+            <span>🖼️ 添加照片</span>
+            <input type="file" id="log-photo" accept="image/*" class="hidden" onchange="previewUpload(this)">
+          </label>
+          <span id="photo-filename" class="text-xs text-slate-400 truncate max-w-[140px]">未选照片</span>
+          <button onclick="saveLog()" class="bg-amber-500 text-white text-xs font-bold px-4 py-2 rounded-xl active:scale-95 transition">发布</button>
+        </div>
+      </div>
+      <div id="logs-timeline" class="space-y-3"></div>
+    </section>
+  </main>
+
+  <!-- ================= 页面 2：皮肤观察与对比 ================= -->
+  <main id="tab-skin" class="hidden px-4 mt-4 space-y-4 max-w-md mx-auto">
+    <!-- 皮肤对比查看器 (就医利器) -->
+    <section class="bg-amber-50/70 border border-amber-200 p-4 rounded-2xl shadow-sm">
+      <div class="flex justify-between items-center mb-2">
+        <h2 class="text-sm font-bold text-amber-900 flex items-center gap-1.5">
+          <span>🔍</span> 皮肤红斑/湿疹前后对比
+        </h2>
+        <span class="text-[10px] text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">就医展示用</span>
+      </div>
+      <p class="text-xs text-amber-800/80 mb-3">勾选下方任意 2 条记录，点击对比查看红斑吸收或消退效果。</p>
+      <button onclick="launchCompare()" class="w-full bg-amber-600 text-white text-xs font-bold py-2 rounded-xl shadow-sm active:scale-95 transition">开始双图并列对比</button>
+    </section>
+
+    <!-- 记录新皮肤情况 -->
+    <section class="bg-white p-4 rounded-2xl shadow-sm">
+      <h2 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-1.5">
+        <span>📸</span> 记录新皮肤状态
+      </h2>
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs text-slate-500 block mb-1">发红部位（西高地高发）</label>
+          <select id="skin-location" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+            <option value="爪缝 / 趾间 (啃爪发红)">🐾 爪缝 / 趾间 (啃爪发红)</option>
+            <option value="肚皮 / 腹股沟 (红点/湿疹)">🟡 肚皮 / 腹股沟 (红斑/丘疹)</option>
+            <option value="下巴 / 嘴角 (红胡子/发炎)">🧼 下巴 / 嘴角 (红胡子/下巴发红)</option>
+            <option value="耳廓 / 耳道内部 (发红/皮屑)">👂 耳廓 / 耳道内部 (发红/皮屑)</option>
+            <option value="腋下 / 大腿内侧 (摩擦潮红)">🦵 腋下 / 大腿根 (软毛打结发红)</option>
+            <option value="其他部位">🏷️ 其他身体部位</option>
+          </select>
+        </div>
+        <textarea id="skin-note" rows="2" placeholder="记录红斑大小、是否有皮屑、是否频繁抓挠或舔舐..." class="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none resize-none"></textarea>
+        <div class="flex items-center justify-between">
+          <label class="text-xs text-slate-600 bg-slate-100 px-3 py-2 rounded-xl cursor-pointer flex items-center gap-1 active:bg-slate-200">
+            <span>📷 拍摄红斑清晰照片</span>
+            <input type="file" id="skin-photo-input" accept="image/*" class="hidden" onchange="previewSkinPhoto(this)">
+          </label>
+          <span id="skin-photo-tip" class="text-xs text-slate-400">未拍摄</span>
+          <button onclick="saveSkinRecord()" class="bg-rose-500 text-white text-xs font-bold px-4 py-2 rounded-xl active:scale-95">保存记录</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 皮肤历史列表 -->
+    <section class="bg-white p-4 rounded-2xl shadow-sm">
+      <h2 class="text-sm font-bold text-slate-900 mb-3">历史追踪记录</h2>
+      <div id="skin-records-list" class="space-y-3"></div>
+    </section>
+  </main>
+
+  <!-- ================= 页面 3：常备小药箱 ================= -->
+  <main id="tab-meds" class="hidden px-4 mt-4 space-y-4 max-w-md mx-auto">
+    <section class="bg-white p-4 rounded-2xl shadow-sm">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+          <span>💊</span> 西高地常备药品库
+        </h2>
+        <button onclick="toggleMedForm()" class="text-xs bg-slate-900 text-white px-3 py-1.5 rounded-full font-medium active:scale-95">+ 录入药品</button>
+      </div>
+
+      <!-- 添加药品抽屉 -->
+      <div id="med-form" class="hidden border-b border-slate-100 pb-3 mb-3 space-y-2">
+        <input id="med-name" type="text" placeholder="药品名称 (如: 维克耳漂 / 爱波克 / 派奥洁)" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+        <input id="med-usage" type="text" placeholder="适应症与用法 (如: 耳道发炎时滴2滴，每周2次)" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-slate-500 flex-shrink-0">到期时间:</label>
+          <input id="med-expiry" type="date" class="w-full text-xs p-2 bg-slate-50 border border-slate-200 rounded-xl">
+        </div>
+        <button onclick="saveMed()" class="w-full bg-emerald-600 text-white text-xs font-bold py-2 rounded-xl active:scale-95 mt-1">确认存入药箱</button>
+      </div>
+
+      <div id="meds-list" class="space-y-2.5"></div>
+    </section>
+  </main>
+
+  <!-- 对比弹窗模态框 (Before vs After) -->
+  <div id="compare-modal" class="hidden fixed inset-0 bg-black/80 z-50 p-4 flex flex-col justify-center items-center">
+    <div class="bg-white w-full max-w-md rounded-3xl p-4 overflow-hidden max-h-[90vh] flex flex-col">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+        <h3 class="text-sm font-bold text-slate-900">🔍 皮肤红斑前后对比</h3>
+        <button onclick="closeCompareModal()" class="text-slate-400 text-sm font-bold">✕ 关闭</button>
+      </div>
+      <div id="compare-body" class="grid grid-cols-2 gap-2 mt-3 overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <!-- 底部原生 Tab 切换栏 -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-slate-200 px-6 py-2 flex justify-around items-center z-40">
+    <button onclick="switchTab('daily')" id="btn-tab-daily" class="flex flex-col items-center gap-0.5 text-amber-600 font-bold transition">
+      <span class="text-lg">🐾</span>
+      <span class="text-[10px]">日常打卡</span>
+    </button>
+    <button onclick="switchTab('skin')" id="btn-tab-skin" class="flex flex-col items-center gap-0.5 text-slate-400 font-medium transition">
+      <span class="text-lg">🔬</span>
+      <span class="text-[10px]">皮肤追踪</span>
+    </button>
+    <button onclick="switchTab('meds')" id="btn-tab-meds" class="flex flex-col items-center gap-0.5 text-slate-400 font-medium transition">
+      <span class="text-lg">💊</span>
+      <span class="text-[10px]">常备药箱</span>
+    </button>
+  </nav>
+
+  <!-- 完整 JavaScript 逻辑 -->
+  <script>
+    let db;
+    const DB_NAME = "WestieLifeDB_v2";
+    const DB_VERSION = 2;
+
+    const DEFAULT_CYCLES = [
+      { id: "ears", name: "洗耳 / 拔耳毛", interval: 10, lastDate: new Date().toISOString() },
+      { id: "bath", name: "低敏药浴 / 洗护", interval: 14, lastDate: new Date().toISOString() },
+      { id: "grooming", name: "美容 / 剪脚底毛", interval: 35, lastDate: new Date().toISOString() },
+      { id: "deworm_out", name: "体外驱虫 (草地防蜱)", interval: 30, lastDate: new Date().toISOString() },
+      { id: "deworm_in", name: "体内驱虫", interval: 90, lastDate: new Date().toISOString() }
+    ];
+
+    const DAILY_TASKS = [
+      { id: "beard", label: "擦胡子", icon: "🧼" },
+      { id: "paws", label: "擦脚爪", icon: "🐾" },
+      { id: "comb", label: "梳软毛", icon: "🪮" },
+      { id: "oil", label: "喂鱼油", icon: "🐟" },
+      { id: "teeth", label: "刷牙", icon: "🪥" }
+    ];
+
+    const DEFAULT_MEDS = [
+      { id: 1, name: "维克耳漂 (Epiotic)", usage: "溶解耳道分泌物，洗澡后滴入揉匀", expiry: "2027-08-30" },
+      { id: 2, name: "鱼油 / Omega-3", usage: "日常随饭喂食，加固敏感肌皮肤屏障", expiry: "2027-12-01" },
+      { id: 3, name: "皮特芬 / 银离子喷雾", usage: "趾间发红、腹部红疹消毒抑菌", expiry: "2027-05-15" }
+    ];
+
+    let currentLogPhoto = null;
+    let currentSkinPhoto = null;
+    let selectedCompareIds = [];
+
+    // 打开数据库
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains("settings")) db.createObjectStore("settings");
+      if (!db.objectStoreNames.contains("logs")) db.createObjectStore("logs", { keyPath: "id", autoIncrement: true });
+      if (!db.objectStoreNames.contains("skin_records")) db.createObjectStore("skin_records", { keyPath: "id", autoIncrement: true });
+      if (!db.objectStoreNames.contains("meds")) db.createObjectStore("meds", { keyPath: "id", autoIncrement: true });
+    };
+    request.onsuccess = (e) => {
+      db = e.target.result;
+      initApp();
+    };
+
+    async function initApp() {
+      const now = new Date();
+      document.getElementById('today-date').innerText = `${now.getMonth() + 1}月${now.getDate()}日`;
+      await loadProfile();
+      await renderDailyChecks();
+      await renderCycles();
+      await renderLogs();
+      await renderSkinRecords();
+      await renderMeds();
+    }
+
+    // Tab 切换控制
+    function switchTab(tabId) {
+      ['daily', 'skin', 'meds'].forEach(id => {
+        document.getElementById(`tab-${id}`).classList.add('hidden');
+        const btn = document.getElementById(`btn-tab-${id}`);
+        btn.classList.remove('text-amber-600', 'font-bold');
+        btn.classList.add('text-slate-400', 'font-medium');
+      });
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`btn-tab-${tabId}`);
+      activeBtn.classList.remove('text-slate-400', 'font-medium');
+      activeBtn.classList.add('text-amber-600', 'font-bold');
+    }
+
+    // 档案与生日倒计时
+    async function loadProfile() {
+      const profile = await getSetting("profile") || { name: "小白", birthYear: 2024, weight: "7.5", avatar: null };
+      document.getElementById('dog-name').innerText = profile.name;
+      document.getElementById('dog-weight').innerText = `${profile.weight} kg ✏️`;
+      if (profile.avatar) {
+        document.getElementById('avatar-img').src = profile.avatar;
+        document.getElementById('avatar-img').classList.remove('hidden');
+        document.getElementById('avatar-placeholder').classList.add('hidden');
+      }
+
+      const now = new Date();
+      const totalMonths = (now.getFullYear() - profile.birthYear) * 12 + (now.getMonth() - 3);
+      const years = Math.floor(totalMonths / 12);
+      const months = Math.max(0, totalMonths % 12);
+      document.getElementById('age-desc').innerText = `出生于 ${profile.birthYear}.04.18 · ${years}岁${months}个月`;
+
+      let nextBday = new Date(now.getFullYear(), 3, 18);
+      if (now > nextBday) nextBday = new Date(now.getFullYear() + 1, 3, 18);
+      const diffDays = Math.ceil((nextBday - now) / (1000 * 60 * 60 * 24));
+      document.getElementById('bday-countdown').innerText = `🎂 距生辰 ${diffDays} 天`;
+    }
+
+    async function changeName() {
+      const profile = await getSetting("profile") || { name: "小白", birthYear: 2024, weight: "7.5" };
+      const val = prompt("输入小狗名字：", profile.name);
+      if (val) { profile.name = val; await saveSetting("profile", profile); loadProfile(); }
+    }
+
+    async function updateWeight() {
+      const profile = await getSetting("profile") || { name: "小白", birthYear: 2024, weight: "7.5" };
+      const val = prompt("更新称重 (kg)：", profile.weight);
+      if (val && !isNaN(val)) { profile.weight = parseFloat(val).toFixed(1); await saveSetting("profile", profile); loadProfile(); }
+    }
+
+    document.getElementById('avatar-input').addEventListener('change', function(e) {
+      if (e.target.files[0]) {
+        compressImage(e.target.files[0], 200, async (base64) => {
+          const profile = await getSetting("profile") || { name: "小白", birthYear: 2024, weight: "7.5" };
+          profile.avatar = base64;
+          await saveSetting("profile", profile);
+          loadProfile();
+        });
+      }
+    });
+
+    // 日常打卡
+    function getTodayKey() { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
+    async function renderDailyChecks() {
+      const todayKey = getTodayKey();
+      const dailyRecord = await getSetting("daily_" + todayKey) || [];
+      const container = document.getElementById('daily-checks');
+      container.innerHTML = "";
+      DAILY_TASKS.forEach(t => {
+        const isDone = dailyRecord.includes(t.id);
+        const el = document.createElement('div');
+        el.className = `p-2 rounded-2xl cursor-pointer transition active:scale-95 ${isDone ? 'bg-amber-100 border border-amber-300' : 'bg-slate-50 border border-slate-100'}`;
+        el.innerHTML = `<span class="text-xl mb-1 block">${t.icon}</span><span class="text-[11px] font-medium ${isDone ? 'text-amber-900 font-bold' : 'text-slate-600'}">${t.label}</span>`;
+        el.onclick = async () => {
+          let rec = await getSetting("daily_" + todayKey) || [];
+          rec = rec.includes(t.id) ? rec.filter(x => x !== t.id) : [...rec, t.id];
+          await saveSetting("daily_" + todayKey, rec);
+          renderDailyChecks();
+        };
+        container.appendChild(el);
+      });
+    }
+
+    // 周期护理
+    async function renderCycles() {
+      let cycles = await getSetting("cycles") || DEFAULT_CYCLES;
+      const container = document.getElementById('cycle-items');
+      container.innerHTML = "";
+      const now = new Date();
+      cycles.forEach((item, idx) => {
+        const diff = Math.floor((now - new Date(item.lastDate)) / (1000 * 60 * 60 * 24));
+        const remain = item.interval - diff;
+        const progress = Math.max(0, Math.min(100, ((item.interval - remain) / item.interval) * 100));
+        let col = "bg-emerald-500";
+        if (remain <= 3) col = "bg-rose-500"; else if (remain <= 7) col = "bg-amber-500";
+        const div = document.createElement('div');
+        div.className = "border border-slate-100 p-2.5 rounded-xl bg-slate-50/50";
+        div.innerHTML = `
+          <div class="flex justify-between items-center text-xs mb-1">
+            <span class="font-semibold text-slate-800">${item.name}</span>
+            <div class="flex items-center gap-1.5">
+              <span class="font-bold ${remain <= 3 ? 'text-rose-600' : 'text-slate-600'}">${remain > 0 ? `剩 ${remain} 天` : '⚠️ 需立即处理'}</span>
+              <button onclick="resetCycle(${idx})" class="text-[10px] text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded-lg active:scale-95">刚完成</button>
+            </div>
+          </div>
+          <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+            <div class="${col} h-full transition-all" style="width: ${progress}%"></div>
+          </div>`;
+        container.appendChild(div);
+      });
+    }
+
+    async function resetCycle(i) {
+      let cycles = await getSetting("cycles") || DEFAULT_CYCLES;
+      cycles[i].lastDate = new Date().toISOString();
+      await saveSetting("cycles", cycles);
+      renderCycles();
+    }
+
+    // 日常手记
+    function togglePostForm() { document.getElementById('post-form').classList.toggle('hidden'); }
+    function previewUpload(input) {
+      if (input.files && input.files[0]) {
+        document.getElementById('photo-filename').innerText = input.files[0].name;
+        compressImage(input.files[0], 800, b64 => currentLogPhoto = b64);
+      }
+    }
+    async function saveLog() {
+      const text = document.getElementById('log-text').value.trim();
+      if (!text && !currentLogPhoto) return alert("写点内容或附上照片吧！");
+      const log = {
+        date: new Date().toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
+        text: text,
+        photo: currentLogPhoto
+      };
+      const tx = db.transaction(["logs"], "readwrite");
+      tx.objectStore("logs").add(log);
+      tx.oncomplete = () => {
+        document.getElementById('log-text').value = "";
+        currentLogPhoto = null;
+        document.getElementById('photo-filename').innerText = "未选照片";
+        togglePostForm();
+        renderLogs();
+      };
+    }
+    async function renderLogs() {
+      const container = document.getElementById('logs-timeline');
+      container.innerHTML = "";
+      const tx = db.transaction(["logs"], "readonly");
+      const req = tx.objectStore("logs").openCursor(null, "prev");
+      let count = 0;
+      req.onsuccess = (e) => {
+        const c = e.target.result;
+        if (c) {
+          count++;
+          const d = c.value;
+          const id = c.key;
+          const div = document.createElement('div');
+          div.className = "border border-slate-100 p-3 rounded-2xl bg-slate-50/50 space-y-2";
+          div.innerHTML = `
+            <div class="flex justify-between items-center text-xs text-slate-400">
+              <span>${d.date}</span>
+              <button onclick="deleteLog(${id})" class="text-slate-300 hover:text-rose-500">删除</button>
+            </div>
+            ${d.photo ? `<img src="${d.photo}" class="w-full max-h-56 object-cover rounded-xl">` : ''}
+            ${d.text ? `<p class="text-xs text-slate-800 leading-relaxed">${d.text}</p>` : ''}`;
+          container.appendChild(div);
+          c.continue();
+        } else if (count === 0) {
+          container.innerHTML = `<div class="text-center py-4 text-xs text-slate-400">还没有日常手记，点击上方记一笔吧 🐾</div>`;
+        }
+      };
+    }
+    function deleteLog(id) {
+      if (confirm("删除这条手记吗？")) {
+        const tx = db.transaction(["logs"], "readwrite");
+        tx.objectStore("logs").delete(id);
+        tx.oncomplete = () => renderLogs();
+      }
+    }
+
+    // ================= 皮肤追踪与对比逻辑 =================
+    function previewSkinPhoto(input) {
+      if (input.files && input.files[0]) {
+        document.getElementById('skin-photo-tip').innerText = "已拍摄 ✅";
+        compressImage(input.files[0], 800, b64 => currentSkinPhoto = b64);
+      }
+    }
+
+    async function saveSkinRecord() {
+      if (!currentSkinPhoto) return alert("请先拍下小狗皮肤发红部位的照片！");
+      const location = document.getElementById('skin-location').value;
+      const note = document.getElementById('skin-note').value.trim();
+      const item = {
+        date: new Date().toISOString(),
+        dateStr: new Date().toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }),
+        location: location,
+        note: note || "日常红斑记录",
+        photo: currentSkinPhoto
+      };
+      const tx = db.transaction(["skin_records"], "readwrite");
+      tx.objectStore("skin_records").add(item);
+      tx.oncomplete = () => {
+        document.getElementById('skin-note').value = "";
+        document.getElementById('skin-photo-tip').innerText = "未拍摄";
+        currentSkinPhoto = null;
+        renderSkinRecords();
+      };
+    }
+
+    async function renderSkinRecords() {
+      const container = document.getElementById('skin-records-list');
+      container.innerHTML = "";
+      selectedCompareIds = [];
+      const tx = db.transaction(["skin_records"], "readonly");
+      const req = tx.objectStore("skin_records").openCursor(null, "prev");
+      let count = 0;
+      req.onsuccess = (e) => {
+        const c = e.target.result;
+        if (c) {
+          count++;
+          const d = c.value;
+          const id = c.key;
+          const card = document.createElement('div');
+          card.className = "flex gap-3 border border-slate-100 p-2.5 rounded-2xl bg-slate-50/50 items-center";
+          card.innerHTML = `
+            <input type="checkbox" onchange="toggleCompareCheck(${id})" class="rounded text-amber-600 focus:ring-0 w-4 h-4 ml-1">
+            <img src="${d.photo}" class="w-16 h-16 object-cover rounded-xl flex-shrink-0" alt="皮肤红斑">
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-bold text-slate-800 truncate">${d.location}</span>
+                <span class="text-[10px] text-slate-400">${d.dateStr}</span>
+              </div>
+              <p class="text-[11px] text-slate-600 mt-1 line-clamp-2">${d.note}</p>
+            </div>
+            <button onclick="deleteSkin(${id})" class="text-[10px] text-slate-300 hover:text-rose-500 pr-1">✕</button>`;
+          container.appendChild(card);
+          c.continue();
+        } else if (count === 0) {
+          container.innerHTML = `<div class="text-center py-6 text-xs text-slate-400">目前没有皮肤红斑记录。拍一张记录皮肤状态吧！</div>`;
+        }
+      };
+    }
+
+    function toggleCompareCheck(id) {
+      if (selectedCompareIds.includes(id)) {
+        selectedCompareIds = selectedCompareIds.filter(x => x !== id);
+      } else {
+        if (selectedCompareIds.length >= 2) {
+          alert("对比模式最多同时勾选 2 张照片！");
+          return;
+        }
+        selectedCompareIds.push(id);
+      }
+    }
+
+    async function launchCompare() {
+      if (selectedCompareIds.length !== 2) return alert("请先勾选列表中任意 2 条记录进行对比！");
+      const tx = db.transaction(["skin_records"], "readonly");
+      const store = tx.objectStore("skin_records");
+      const rec1 = await getRecordById(store, selectedCompareIds[0]);
+      const rec2 = await getRecordById(store, selectedCompareIds[1]);
+      
+      // 按时间先后排序：[较早记录, 较晚记录]
+      const [earlier, later] = new Date(rec1.date) < new Date(rec2.date) ? [rec1, rec2] : [rec2, rec1];
+      const diffDays = Math.round(Math.abs(new Date(later.date) - new Date(earlier.date)) / (1000 * 60 * 60 * 24));
+
+      const body = document.getElementById('compare-body');
+      body.innerHTML = `
+        <div class="space-y-1.5">
+          <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">第 1 次记录 (${earlier.dateStr})</span>
+          <img src="${earlier.photo}" class="w-full h-44 object-cover rounded-xl">
+          <p class="text-[11px] text-slate-700">${earlier.note}</p>
+        </div>
+        <div class="space-y-1.5">
+          <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">第 2 次对比 (${later.dateStr} · 间隔${diffDays}天)</span>
+          <img src="${later.photo}" class="w-full h-44 object-cover rounded-xl">
+          <p class="text-[11px] text-slate-700">${later.note}</p>
+        </div>`;
+      document.getElementById('compare-modal').classList.remove('hidden');
+    }
+
+    function closeCompareModal() { document.getElementById('compare-modal').classList.add('hidden'); }
+    function getRecordById(store, id) {
+      return new Promise(res => { store.get(id).onsuccess = (e) => res(e.target.result); });
+    }
+    function deleteSkin(id) {
+      if (confirm("确定删除这条皮肤记录吗？")) {
+        const tx = db.transaction(["skin_records"], "readwrite");
+        tx.objectStore("skin_records").delete(id);
+        tx.oncomplete = () => renderSkinRecords();
+      }
+    }
+
+    // ================= 常备药箱逻辑 =================
+    function toggleMedForm() { document.getElementById('med-form').classList.toggle('hidden'); }
+    async function saveMed() {
+      const name = document.getElementById('med-name').value.trim();
+      const usage = document.getElementById('med-usage').value.trim();
+      const expiry = document.getElementById('med-expiry').value;
+      if (!name || !expiry) return alert("请填写药品名称和到期时间！");
+      const item = { name, usage, expiry };
+      const tx = db.transaction(["meds"], "readwrite");
+      tx.objectStore("meds").add(item);
+      tx.oncomplete = () => {
+        document.getElementById('med-name').value = "";
+        document.getElementById('med-usage').value = "";
+        document.getElementById('med-expiry').value = "";
+        toggleMedForm();
+        renderMeds();
+      };
+    }
+
+    async function renderMeds() {
+      const container = document.getElementById('meds-list');
+      container.innerHTML = "";
+      const tx = db.transaction(["meds"], "readonly");
+      const req = tx.objectStore("meds").getAll();
+      req.onsuccess = async () => {
+        let meds = req.result;
+        // 第一次打开如果药箱为空，自动填充西高地常用药品预设
+        if (meds.length === 0) {
+          const wtx = db.transaction(["meds"], "readwrite");
+          for (let m of DEFAULT_MEDS) wtx.objectStore("meds").add(m);
+          wtx.oncomplete = () => renderMeds();
+          return;
+        }
+
+        const now = new Date();
+        meds.forEach(med => {
+          const expDate = new Date(med.expiry);
+          const diffDays = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
+          let badge = `<span class="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">正常 (剩 ${diffDays} 天)</span>`;
+          if (diffDays <= 0) {
+            badge = `<span class="text-[10px] text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200 font-bold">⚠️ 已过期</span>`;
+          } else if (diffDays <= 30) {
+            badge = `<span class="text-[10px] text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 font-bold">即将到期 (剩 ${diffDays} 天)</span>`;
+          }
+
+          const div = document.createElement('div');
+          div.className = "border border-slate-100 p-3 rounded-2xl bg-slate-50/50 space-y-1";
+          div.innerHTML = `
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-slate-800">${med.name}</span>
+              ${badge}
+            </div>
+            <p class="text-[11px] text-slate-500">${med.usage || '无特别用法说明'}</p>
+            <div class="flex justify-between items-center text-[10px] text-slate-400 pt-1 border-t border-slate-100 mt-1">
+              <span>到期日: ${med.expiry}</span>
+              <button onclick="deleteMed(${med.id})" class="text-slate-300 hover:text-rose-500">移除药品</button>
+            </div>`;
+          container.appendChild(div);
+        });
+      };
+    }
+
+    function deleteMed(id) {
+      if (confirm("确定移除该药品记录？")) {
+        const tx = db.transaction(["meds"], "readwrite");
+        tx.objectStore("meds").delete(id);
+        tx.oncomplete = () => renderMeds();
+      }
+    }
+
+    // 辅助函数：图片压缩与通用存储
+    function compressImage(file, maxWidth, callback) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let w = img.width, h = img.height;
+          if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          callback(canvas.toDataURL('image/jpeg', 0.8));
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+    function saveSetting(k, v) {
+      return new Promise(r => { const tx = db.transaction(["settings"], "readwrite"); tx.objectStore("settings").put(v, k); tx.oncomplete = () => r(); });
+    }
+    function getSetting(k) {
+      return new Promise(r => { const tx = db.transaction(["settings"], "readonly"); const q = tx.objectStore("settings").get(k); q.onsuccess = () => r(q.result); });
+    }
+  </script>
+</body>
+</html>
